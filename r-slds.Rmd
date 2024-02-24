@@ -1,0 +1,57 @@
+---
+title: Switching Linear Dynamical Systems
+author: Davide Bacilieri, Lorenzo Barbiero, Guglielmo Bordin, Alessio Pitteri
+date: "`r gsub('^0', '', format(Sys.Date(), '%d %B %Y'))`"
+lang: en-GB
+output:
+  tufte::tufte_html:
+    css: style.css
+bibliography: refs.bib
+link-citations: yes
+---
+
+<script type="text/x-mathjax-config"> 
+  MathJax.Hub.Config({
+    "HTML-CSS": { scale: 100, linebreaks: { automatic: true } },
+    SVG: { linebreaks: { automatic: true } },
+    displayAlign: "left",
+    displayIndent: "2em"
+  })
+</script>
+
+
+```{r, echo = FALSE}
+# load R packages and set up
+library(rstan)
+options(mc.cores = parallel::detectCores() - 2)
+rstan_options(auto_write = TRUE)
+```
+# Base model without recursion
+Let’s start from the basic SLDS (Switching Linear Dynamical Systems) model –
+*basic* in the sense that we will not include the dependence of the current
+latent state from the past *visible* state: latent states $z_t$ will only depend
+on $z_{t - 1}$ [@Linderman17].
+
+The goal is to infer a kind of hidden-state Markov model on a time series
+$\{y_t\}_{t = 1}^{T}$. We build a set of $T$ latent states $z_t \in \{1, 2,
+\dots K\}$. $z_t$ will define the linear dynamics followed by the system at time
+$t$, so a transition in the latent space will correspond to a change in the
+linear dynamics in the visible space.
+
+The dynamics in the latent space is Markovian:
+
+$$
+  z_{t + 1} \sim \pi_{z_t},
+$$
+
+where $\pi_k$ denotes the $k$-th row of the transition matrix (following the
+notation from Linderman et al. 2017).
+
+```{stan, output.var = "base_model", eval = FALSE}
+data {
+  int<lower=0> T;  // length of the time series
+  int<lower=0> N;  // number of features
+  int<lower=0> K;  // number of hidden states
+  array[T] row_vector[N] y;
+}
+```
