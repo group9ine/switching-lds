@@ -37,7 +37,11 @@ body {
   font-variant-numeric: oldstyle-nums;
 }
 
+/*
 h1 { margin-top: 3.2rem; }
+
+h2 { margin-top: 2.8rem; }
+*/
 
 h4.author, h4.date { margin: 1.1rem auto; }
 
@@ -56,3 +60,5 @@ h1 code, h2 code, h3 code { font-size: 1.3rem; }
 .marginnote code, .sidenote code { font-size: 1.3rem; }
 
 a { font-family: source-code; }
+
+#TOC a { font-family: source-serif; }
