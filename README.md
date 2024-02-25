@@ -1,2 +1,1 @@
-# switching-lds
-MCMC inference on Switching Linear Dynamical Systems
+# Switching Linear Dynamical Systems
