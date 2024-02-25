@@ -12,7 +12,7 @@
 
 <meta name="author" content="Davide Bacilieri, Lorenzo Barbiero, Guglielmo Bordin, Alessio Pitteri" />
 
-<meta name="date" content="2024-02-24" />
+<meta name="date" content="2024-02-25" />
 
 <title>Switching Linear Dynamical Systems</title>
 
@@ -133,7 +133,7 @@ body {
 font-family: source-serif;
 font-variant-numeric: oldstyle-nums;
 }
-h1 { margin-top: 3.2rem; }
+
 h4.author, h4.date { margin: 1.1rem auto; }
 p, .sidenote, .marginnote { line-height: 1.5; }
 code {
@@ -145,6 +145,7 @@ pre code { font-size: 1.3rem; }
 h1 code, h2 code, h3 code { font-size: 1.3rem; }
 .marginnote code, .sidenote code { font-size: 1.3rem; }
 a { font-family: source-code; }
+#TOC a { font-family: source-serif; }
 </style>
 
 
@@ -159,40 +160,167 @@ a { font-family: source-code; }
 
 <h1 class="title toc-ignore">Switching Linear Dynamical Systems</h1>
 <h4 class="author">Davide Bacilieri, Lorenzo Barbiero, Guglielmo Bordin, Alessio Pitteri</h4>
-<h4 class="date">24 February 2024</h4>
+<h4 class="date">25 February 2024</h4>
 
 
+<div id="TOC">
+<ul>
+<li><a href="#base-model-without-recursion" id="toc-base-model-without-recursion">Base model without recursion</a></li>
+<li><a href="#adding-recursion-rslds" id="toc-adding-recursion-rslds">Adding recursion: rSLDS</a></li>
+</ul>
+</div>
 
 <script type="text/x-mathjax-config"> 
-  MathJax.Hub.Config({
-    "HTML-CSS": { scale: 100, linebreaks: { automatic: true } },
-    SVG: { linebreaks: { automatic: true } },
-    displayAlign: "left",
-    displayIndent: "2em"
-  })
+  MathJax.Hub.Config({ displayAlign: "left", displayIndent: "2em" })
 </script>
 <div id="base-model-without-recursion" class="section level1">
 <h1>Base model without recursion</h1>
 <p>Let’s start from the basic SLDS (Switching Linear Dynamical Systems) model –
 <em>basic</em> in the sense that we will not include the dependence of the current
-latent state from the past <em>visible</em> state: latent states <span class="math inline">\(z_t\)</span> will only depend
-on <span class="math inline">\(z_{t - 1}\)</span> <span class="citation">(<label for="tufte-mn-1" class="margin-toggle">&#8853;</label><input type="checkbox" id="tufte-mn-1" class="margin-toggle">Linderman et al. 2017<span class="marginnote">Linderman, Scott, Matthew Johnson, Andrew Miller, Ryan Adams, David Blei, and Liam Paninski. 2017. <span>‘Bayesian Learning and Inference in Recurrent Switching Linear Dynamical Systems’</span>. In <em>Proceedings of the 20th International Conference on Artificial Intelligence and Statistics</em>, edited by Aarti Singh and Jerry Zhu, 54:914–22. Proceedings of Machine Learning Research. PMLR. <a href="https://proceedings.mlr.press/v54/linderman17a.html">https://proceedings.mlr.press/v54/linderman17a.html</a>.</span>)</span>.</p>
+latent state from the past observation: latent states <span class="math inline">\(z_t\)</span> will only depend
+on <span class="math inline">\(z_{t - 1}\)</span> <span class="citation">(<label for="tufte-mn-1" class="margin-toggle">&#8853;</label><input type="checkbox" id="tufte-mn-1" class="margin-toggle">Linderman et al. 2017<span class="marginnote">Linderman, Scott W., Matthew J. Johnson, Andrew C. Miller, Ryan P. Adams, David M. Blei, and Liam Paninski. 2017. <span>‘Bayesian Learning and Inference in Recurrent Switching Linear Dynamical Systems’</span>. In <em>Proceedings of the 20th International Conference on Artificial Intelligence and Statistics</em>, edited by Aarti Singh and Jerry Zhu, 54:914–22. Proceedings of Machine Learning Research. PMLR. <a href="https://proceedings.mlr.press/v54/linderman17a.html">https://proceedings.mlr.press/v54/linderman17a.html</a>.</span>)</span>.</p>
 <p>The goal is to infer a kind of hidden-state Markov model on a time series
 <span class="math inline">\(\{y_t\}_{t = 1}^{T}\)</span>. We build a set of <span class="math inline">\(T\)</span> latent states <span class="math inline">\(z_t \in \{1, 2, \dots K\}\)</span>. <span class="math inline">\(z_t\)</span> will define the linear dynamics followed by the system at time
 <span class="math inline">\(t\)</span>, so a transition in the latent space will correspond to a change in the
-linear dynamics in the visible space. <code>this is code AAA</code></p>
+linear dynamics in the observable space.</p>
 <p>The dynamics in the latent space is Markovian:</p>
 <p><span class="math display">\[
   z_{t + 1} \sim \pi_{z_t},
 \]</span></p>
 <p>where <span class="math inline">\(\pi_k\)</span> denotes the <span class="math inline">\(k\)</span>-th row of the transition matrix (following the
-notation from Linderman et al. 2017).</p>
-<pre class="stan"><code>data {
-  int&lt;lower=0&gt; T;  // length of the time series
-  int&lt;lower=0&gt; N;  // number of features
-  int&lt;lower=0&gt; K;  // number of hidden states
+notation from Linderman et al. 2017). The discrete state <span class="math inline">\(z_t\)</span> determines the
+linear dynamical system used at time <span class="math inline">\(t\)</span> to set the evolution of a <em>continuous</em>
+latent state <span class="math inline">\(x_t \in \mathbb{R}^{M}\)</span>:</p>
+<p><span class="math display">\[
+  x_{t + 1} = A_{z_{t + 1}} x_{t} + b_{z_{t + 1}} + v_t, \quad v_t \overset{\mathrm{iid}}{\sim}
+  \mathcal{N}(0, Q_{z_{t + 1}}),
+\]</span></p>
+<p>where <span class="math inline">\(A_k, Q_k \in \mathbb{R}^{M \times M}\)</span> and <span class="math inline">\(b_k \in \mathbb{R}^{M}\)</span>. Note that there are <span class="math inline">\(K\)</span>
+possible values for these three parameters, <span class="math inline">\(K\)</span> being the number of <span class="math inline">\(z\)</span> states.</p>
+<p>The final passage is to go back to the visible space, transforming the latent
+state <span class="math inline">\(x_t\)</span> into the corresponding observation <span class="math inline">\(y_t \in \mathbb{R}^{N}\)</span>:</p>
+<p><span class="math display">\[
+  y_t = C_{z_t} x_t + d_{z_t} + w_t, \quad w_t \overset{\mathrm{iid}}{\sim}\mathcal{N}(0, S_{z_t}),
+\]</span></p>
+<p>where <span class="math inline">\(C_k \in \mathbb{R}^{N \times M}\)</span>, <span class="math inline">\(S_k \in \mathbb{R}^{N \times N}\)</span> and <span class="math inline">\(d_k \in \mathbb{R}^{N}\)</span>. Once
+again, <span class="math inline">\(z_t\)</span> sets the linear transformation by selecting among the <span class="math inline">\(K\)</span> possible
+values of these three parameters.</p>
+<p>Putting everything together, the model’s parameter set is</p>
+<p><span class="math display">\[
+  \vartheta= \{(\pi_k, A_k, Q_k, b_k, C_k, S_k, d_k)\}_{k = 1}^K.
+\]</span></p>
+<p>Regarding the priors, Linderman et al. choose a Dirichlet on the rows of the
+transition matrix, and matrix normal inverse Wishart priors on the other
+parameters:</p>
+<p><span class="math display">\[\begin{align}
+          \pi_k &amp;\overset{\mathrm{iid}}{\sim}\operatorname{Dir}(\alpha), \\
+  A_k, b_k, Q_k &amp;\overset{\mathrm{iid}}{\sim}\operatorname{MNIW}(\lambda), \\
+  C_k, d_k, S_k &amp;\overset{\mathrm{iid}}{\sim}\operatorname{MNIW}(\eta).
+\end{align}\]</span></p>
+<!--
+## Setting up the Stan model
+
+
+```stan
+data {
+  int<lower=0> T;  // length of the time series
+  int<lower=0> N;  // number of features
+  int<lower=0> K;  // number of hidden states
   array[T] row_vector[N] y;
-}</code></pre>
+}
+```
+-->
+</div>
+<div id="adding-recursion-rslds" class="section level1">
+<h1>Adding recursion: rSLDS</h1>
+<p>Linderman et al. propose enriching the model by adding recursion, manifested as
+a conditional dependence of <span class="math inline">\(z_{t + 1}\)</span> on the preceding continuous latent state
+<span class="math inline">\(x_t\)</span>. Instead of a standard multiclass logistic regression with softmax, the
+conditional distribution is expressed through a stick-breaking function <span class="math inline">\(\pi_{\mathrm{SB}}\colon \mathbb{R}^{K - 1} \to [0, 1]^K\)</span>:</p>
+<p><span class="math display">\[
+  z_{t + 1} \sim \pi_{\mathrm{SB}}(\nu_{t + 1}), \quad \nu_{t + 1} = R_{z_t} x_t + r_{z_t},
+\]</span></p>
+<p>where <span class="math inline">\(R_k \in \mathbb{R}^{K-1 \times M}\)</span> and <span class="math inline">\(r_k \in \mathbb{R}^{K-1}\)</span>. Therefore, instead of the
+simpler dependence rule <span class="math inline">\(z_{t + 1} \sim \pi_{z_t}\)</span>, we have this more involved
+generating process for the discrete latent states. Notice that the Markov
+dependence of <span class="math inline">\(z_{t + 1}\)</span> on <span class="math inline">\(z_t\)</span> is still there, through the linear
+reweighting of <span class="math inline">\(x_t\)</span> with bias performed by <span class="math inline">\(R_k\)</span> and <span class="math inline">\(r_k\)</span>.</p>
+<p>The stick-breaking distribution is defined as</p>
+<p><span class="math display">\[\begin{align}
+        \pi_{\mathrm{SB}}(\nu) &amp;= (\pi_{\mathrm{SB}}^{(1)}(\nu), \dots, \pi_{\mathrm{SB}}^{(K)}(\nu)), \\
+  \pi_{\mathrm{SB}}^{(k)}(\nu) &amp;= \sigma(\nu_k)
+                      \prod_{j &lt; k}^{\vphantom{K}} (1 - \sigma(\nu_j)), \\
+  \pi_{\mathrm{SB}}^{(K)}(\nu) &amp;= \prod_{j = 1}^{K - 1} (1 - \sigma(\nu_j)),
+\end{align}\]</span></p>
+<p>where <span class="math inline">\(\sigma(x)\)</span> denotes the logistic function <span class="math inline">\(e^x / (1 + e^x)\)</span>. You can
+visualize the process as follows: the first element takes a portion
+<span class="math inline">\(\sigma(\nu_1)\)</span> of the unit ‘stick’, the second element takes a portion
+<span class="math inline">\(\sigma(\nu_2)\)</span> of the remaining stick, which now has a length of <span class="math inline">\(1 - \sigma(\nu_1)\)</span>, and so on. Hence, the name ‘stick-breaking’. Using the
+expression of <span class="math inline">\(\sigma(x)\)</span> we can also write</p>
+<p><span class="math display">\[\begin{align}
+  \pi_{\mathrm{SB}}^{(k)}(\nu) &amp;= \prod_{j \leqslant k} \frac{e^{\nu_k}}{1 + e^{\nu_j}}, \\
+  \pi_{\mathrm{SB}}^{(K)}(\nu) &amp;= \prod_{j = 1}^{K - 1} \frac{1}{1 + e^{\nu_j}}.
+\end{align}\]</span></p>
+<p>Borrowing the notation from Linderman et al. once again, we write the likelihood
+<span class="math inline">\(p(z \;\vert\;x)\)</span> as</p>
+<p><span class="math display">\[
+  p(z_{t + 1} \;\vert\;x_t) = \prod_{k = 1}^{K - 1}
+  \frac{(e^{\nu_{t+1, k}})^{\mathbb{I}[z_{t + 1} = k]}}{(1 + e^{\nu_{t+1,
+  k}})^{\mathbb{I}[z_{t + 1} \geqslant k]}}.
+\]</span></p>
+<p>with <span class="math inline">\(\mathbb{I}[\cdot]\)</span> denoting the indicator function. Remember that <span class="math inline">\(\nu_{t + 1}\)</span>
+is a function of <span class="math inline">\(x_t\)</span>.</p>
+<p>Now, if we were to use this likelihood with a Gaussian prior on <span class="math inline">\(x\)</span>, we would
+get a pretty messy non-Gaussian posterior <span class="math inline">\(p(x \;\vert\;z)\)</span>. A possible solution
+<span class="citation">(<label for="tufte-mn-2" class="margin-toggle">&#8853;</label><input type="checkbox" id="tufte-mn-2" class="margin-toggle">Linderman, Johnson, and Adams 2015<span class="marginnote">Linderman, Scott W., Matthew J. Johnson, and Ryan P. Adams. 2015. <span>‘Dependent Multinomial Models Made Easy: Stick-Breaking with the Pólya-Gamma Augmentation’</span>. In <em>Advances in Neural Information Processing Systems</em>, edited by Corinna Cortes, Lawrence D. Neil, Daniel D. Lee, Masashi Sugiyama, and Roman Garnett, 28:3456–65. Curran Associates, Inc. <a href="https://proceedings.neurips.cc/paper_files/paper/2015/file/07a4e20a7bbeeb7a736682b26b16ebe8-Paper.pdf">https://proceedings.neurips.cc/paper_files/paper/2015/file/07a4e20a7bbeeb7a736682b26b16ebe8-Paper.pdf</a>.</span>)</span> is given by the Pólya-gamma augmentation scheme, first described
+in <span class="citation">Polson, Scott, and Windle (<label for="tufte-mn-3" class="margin-toggle">&#8853;</label><input type="checkbox" id="tufte-mn-3" class="margin-toggle">2013<span class="marginnote">Polson, Nicholas G., James G. Scott, and Jesse Windle. 2013. <span>‘Bayesian Inference for Logistic Models Using Pólya–Gamma Latent Variables’</span>. <em>Journal of the American Statistical Association</em> 108 (504): 1339–49. <a href="https://doi.org/10.1080/01621459.2013.829001">https://doi.org/10.1080/01621459.2013.829001</a>.</span>)</span>. The idea is to introduce <span class="math inline">\(K\)</span> auxiliary variables <span class="math inline">\(\omega = \{\omega_k\}_{k = 1}^{K}\)</span> and exploit the identity</p>
+<p><span class="math display">\[
+  \frac{e^{a\nu}}{(1 + e^\nu)^b} = \frac{e^{\kappa\nu}}{2^b}
+  \int_0^\infty e^{-\omega \nu^2/2} p(\omega) \, d\omega,
+  \quad \omega \sim \operatorname{PG}(b, 0).
+\]</span></p>
+<p>where <span class="math inline">\(\operatorname{PG}(b, c)\)</span> denotes the Pólya-gamma probability density. We can recognize
+the terms in the product of <span class="math inline">\(p(z_{t + 1} \;\vert\;x_t)\)</span> as the expression in the
+left-hand side, with <span class="math inline">\(a = \mathbb{I}[z_{t + 1} = k]\)</span> and <span class="math inline">\(b = \mathbb{I}[z_{t + 1} \geqslant k]\)</span>.
+Then, if we condition also on <span class="math inline">\(\omega_t\)</span> the integral goes away, leaving</p>
+<p><span class="math display">\[
+  p(z_{t + 1} \;\vert\;x_t, \omega_t) \propto \prod_{k = 1}^{K - 1}
+  \exp\biggl(\kappa_{t+1, k} \nu_{t+1, k} - \frac{1}{2} \omega_{t, k}
+  \nu_{t+1, k}^2\biggr).
+\]</span></p>
+<p>Here we can complete the square in the exponent:</p>
+<p><span class="math display">\[
+  \kappa \nu - \frac{\omega \nu^2}{2} = - \frac{\omega}{2}\biggl(\nu -
+  \frac{\kappa}{\omega}\biggl)^{\!2} + \frac{\kappa^2}{2 \omega}.
+\]</span></p>
+<p>The last term is constant with respect to <span class="math inline">\(\nu_{t + 1}\)</span> – it only depends on
+<span class="math inline">\(\omega_t\)</span> and <span class="math inline">\(z_{t + 1}\)</span> – so we can leave it out of the product:</p>
+<p><span class="math display">\[
+  p(z_{t + 1} \;\vert\;x_t, \omega_t) \propto \prod_{k = 1}^{K - 1}
+  \exp\biggl[-\frac{\omega_{t, k}}{2}\biggl(\nu_{t+1, k} - \frac{\kappa_{t+1,
+  k}}{\omega_{t,k}}\biggr)^{\!2}\biggr].
+\]</span></p>
+<p>Finally, we can write this in vectorial form by defining the matrix <span class="math inline">\(\Omega_t = \operatorname{diag}(\omega_t)\)</span>, and recognize a multinomial Gaussian distribution in <span class="math inline">\(\nu_{t + 1}\)</span>:</p>
+<p><span class="math display">\[
+\begin{split}
+  p(z_{t + 1} \;\vert\;x_t, \omega_t) &amp;\propto \exp\biggl[-\frac{1}{2}(\nu_{t+1} -
+  \Omega_t^{-1} \kappa_{t + 1})^{\mkern-1.5mu\mathsf{T}}\Omega_t (\nu_{t + 1} - \Omega_t^{-1}
+  \kappa_{t+1})\biggr] \\
+  &amp;\propto \mathcal{N}(\nu_{t + 1} \;\vert\;\Omega_t^{-1} \kappa_{t+1}, \Omega_t^{-1}).
+\end{split}
+\]</span></p>
+<p>Also, let’s consider the integrand of the <span class="math inline">\(e^{a\nu}/(1 + e^\nu)^b\)</span> identity as a
+conditional density of <span class="math inline">\(\omega \;\vert\;\nu\)</span>,</p>
+<p><span class="math display">\[
+  p(\omega \;\vert\;b, \nu) \propto e^{-\omega\nu^2/2} p_{\mathrm{PG}}(\omega
+  \;\vert\;b, 0).
+\]</span></p>
+<p>From Posson, Scott, and Windle (2013) we know that a random variable <span class="math inline">\(\omega \sim \operatorname{PG}(b, c)\)</span> has precisely this probability density, identifying <span class="math inline">\(c\)</span> with <span class="math inline">\(\nu\)</span>.
+Therefore, we can add the following update rule for the Pólya-gamma auxiliary
+variables:</p>
+<p><span class="math display">\[
+  \omega \sim \operatorname{PG}(\mathbb{I}[z_{t+1} \geqslant k], \nu_{t+1, k}).
+\]</span></p>
 </div>
 
 
