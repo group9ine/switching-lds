@@ -21,13 +21,13 @@ data {
   // prior parameters
   vector[K] alpha;  // for pi
 
-  // for A, Q
+  // for Ab, Q
   matrix[M, M + 1] Mu_x;
   matrix[M + 1, M + 1] Omega_x;  // given as precision = inverse cov
   matrix[M, M] Psi_x;
   real<lower=M - 1> nu_x;
 
-  // for C, S
+  // for Cd, S
   matrix[N, M + 1] Mu_y;
   matrix[M + 1, M + 1] Omega_y;
   matrix[N, N] Psi_y;
@@ -38,40 +38,42 @@ parameters {
   simplex[K] trans[K];  // transition matrix
 
   // linear parameters for x
-  matrix[M, M + 1] Ab[K]
+  matrix[M, M + 1] Ab[K];
   matrix[M, M] Q[K];  // precision = inverse cov
 
   // linear parameters for y
   matrix[N, M + 1] Cd[K];
-  matrix[N, N] S[K];
-}
-
-transformed parameters {
-  matrix[M, M] A[K] = Ab[:][, :M];
-  vector[M] b[K] = Ab[:][, M + 1];
-
-  matrix[N, M] C[K] = Cd[:][, :M];
-  vector[N] d[K] = Cd[:][, M + 1];
+  matrix[N, N] S[K];  // precision = inverse cov
 }
 
 model {
   int z[T];        // discrete latent states
   vector[M] x[T];  // continuous latent states
 
+  // subset Ab and Cd for linear dynamics over x
+  matrix[M, M] A[K];
+  vector[M] b[K];
+  matrix[N, M] C[K];
+  vector[N] d[K];
+
   // assigning priors
   for (k in 1:K) {
     trans[k] ~ dirichlet(alpha);
 
     Q[k] ~ wishart(nu_x, Psi_x);
-    A[k] ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
+    Ab[k] ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
+    A[k] = Ab[k][, :M];
+    b[k] = Ab[k][, M + 1];
 
     S[k] ~ wishart(nu_y, Psi_y);
-    C[k] ~ matrix_normal_prec(Mu_y, S[k], Omega_y);
+    Cd[k] ~ matrix_normal_prec(Mu_y, S[k], Omega_y);
+    C[k] = Cd[k][, :M];
+    d[k] = Cd[k][, M + 1];
   }
 
   for (t in 2:T) {
     z[t] ~ categorical(trans[z[t - 1]]);
-    x[t] ~ multi_normal_prec(A[z[t]] * x[t - 1] + b[z[t]]);
-    y[t] ~ multi_normal_prec(C[z[t]] * x[t] + d[z[t]]);
+    x[t] ~ multi_normal_prec(A[z[t]] * x[t - 1] + b[z[t]], Q[z[t]]);
+    y[t] ~ multi_normal_prec(C[z[t]] * x[t] + d[z[t]], S[z[t]]);
   }
 }
