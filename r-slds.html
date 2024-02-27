@@ -12,7 +12,7 @@
 
 <meta name="author" content="Davide Bacilieri, Lorenzo Barbiero, Guglielmo Bordin, Alessio Pitteri" />
 
-<meta name="date" content="2024-02-25" />
+<meta name="date" content="2024-02-27" />
 
 <title>Switching Linear Dynamical Systems</title>
 
@@ -140,11 +140,15 @@ code {
 font-family: source-code;
 font-size: 1.3rem;
 line-height: 1.5;
+font-variant-numeric: lining-nums;
 }
 pre code { font-size: 1.3rem; }
 h1 code, h2 code, h3 code { font-size: 1.3rem; }
 .marginnote code, .sidenote code { font-size: 1.3rem; }
-a { font-family: source-code; }
+a {
+font-family: source-code;
+font-variant-numeric: lining-nums;
+}
 #TOC a { font-family: source-serif; }
 </style>
 
@@ -160,12 +164,15 @@ a { font-family: source-code; }
 
 <h1 class="title toc-ignore">Switching Linear Dynamical Systems</h1>
 <h4 class="author">Davide Bacilieri, Lorenzo Barbiero, Guglielmo Bordin, Alessio Pitteri</h4>
-<h4 class="date">25 February 2024</h4>
+<h4 class="date">27 February 2024</h4>
 
 
 <div id="TOC">
 <ul>
-<li><a href="#base-model-without-recursion" id="toc-base-model-without-recursion">Base model without recursion</a></li>
+<li><a href="#base-model-without-recursion" id="toc-base-model-without-recursion">Base model without recursion</a>
+<ul>
+<li><a href="#setting-up-the-stan-model" id="toc-setting-up-the-stan-model">Setting up the Stan model</a></li>
+</ul></li>
 <li><a href="#adding-recursion-rslds" id="toc-adding-recursion-rslds">Adding recursion: rSLDS</a></li>
 </ul>
 </div>
@@ -217,19 +224,69 @@ parameters:</p>
   A_k, b_k, Q_k &amp;\overset{\mathrm{iid}}{\sim}\operatorname{MNIW}(\lambda), \\
   C_k, d_k, S_k &amp;\overset{\mathrm{iid}}{\sim}\operatorname{MNIW}(\eta).
 \end{align}\]</span></p>
-<!--
-## Setting up the Stan model
+<div id="setting-up-the-stan-model" class="section level2">
+<h2>Setting up the Stan model</h2>
+<pre><code>functions {
+  real matrix_normal_prec_lpdf(matrix X, matrix M, matrix U, matrix V) {
+    int N = rows(X);
+    int P = cols(X);
+    real lp = - N * P * log(2 * pi())
+      + N * log_determinant_spd(V)
+      + P * log_determinant_spd(U)
+      - trace_gen_quad_form(V, U, X - M);
 
-
-```stan
-data {
-  int<lower=0> T;  // length of the time series
-  int<lower=0> N;  // number of features
-  int<lower=0> K;  // number of hidden states
-  array[T] row_vector[N] y;
+    return 0.5 * lp;
+  }
 }
-```
--->
+
+data {
+  int&lt;lower=0&gt; K;  // number of hidden states
+  int&lt;lower=0&gt; M;  // dimension of the continuous hidden states
+  int&lt;lower=0&gt; N;  // number of observed features
+  int&lt;lower=0&gt; T;  // length of the time series
+  vector[N] y[T];
+
+  // prior parameters
+  real alpha;  // for pi
+
+  // for A, Q
+  matrix[M, M + 1] Mu_x;
+  matrix[M + 1, M + 1] Lambda_x;  // given as precision = inverse cov
+  matrix[M, M] Psi_x;
+  real&lt;lower=M - 1&gt; nu_x;
+
+  // for C, S
+  matrix[N, M + 1] Mu_y;
+  matrix[M + 1, M + 1] Lambda_y;
+  matrix[N, N] Psi_y;
+  real&lt;lower=N - 1&gt; nu_y;
+}
+
+parameters {
+  simplex[K] pi;
+
+  // linear parameters for x
+  array[K] matrix[M, M + 1] A;
+  array[K] matrix[M, M] Q;  // precision = inverse cov
+
+  // linear parameters for y
+  array[K] matrix[N, M + 1] C;
+  array[K] matrix[N, N] S;
+}
+
+model {
+  // assigning priors
+  for (k in 1:K) {
+    pi[k] ~ dirichlet(alpha);
+
+    Q[k] ~ wishart(nu_x, Psi_x);
+    A[k] ~ matrix_normal_prec(Mu_x, Q[k], Lambda_x);
+
+    S[k] ~ wishart(nu_y, Psi_y);
+    C[k] ~ matrix_normal_prec(Mu_y, S[k], Lambda_y);
+  }
+}</code></pre>
+</div>
 </div>
 <div id="adding-recursion-rslds" class="section level1">
 <h1>Adding recursion: rSLDS</h1>

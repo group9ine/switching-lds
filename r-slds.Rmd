@@ -96,18 +96,11 @@ parameters:
   C_k, d_k, S_k &\iidsim \MNIW(\eta).
 \end{align}
 
-<!--
 ## Setting up the Stan model
 
-```{stan, output.var = "base_model", eval = FALSE}
-data {
-  int<lower=0> T;  // length of the time series
-  int<lower=0> N;  // number of features
-  int<lower=0> K;  // number of hidden states
-  array[T] row_vector[N] y;
-}
+```{r, echo = FALSE, comment = ""}
+cat(paste(readLines("stan/slds.stan"), collapse = "\n"))
 ```
--->
 
 # Adding recursion: rSLDS
 Linderman et al. propose enriching the model by adding recursion, manifested as
