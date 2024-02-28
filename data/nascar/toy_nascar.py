@@ -49,9 +49,9 @@ def accelerating_model(T):
         x.append([x[-1][0] + v[0] * dt, x[-1][1] + v[1] * dt])
         if abs(x[-1][0]) < 1:
             if x[-1][0] < 0:
-                v[0] += 0.1*dt
+                v[0] += 0.1 * dt
             else:
-                v[0] -= 0.1*dt
+                v[0] -= 0.1 * dt
         elif x[-1][0] > 1:
             v[0] += -(x[-1][0] - 1) * dt
             v[1] += -x[-1][1] * dt
@@ -126,6 +126,7 @@ def advanced_model(T):  ## don't use yet
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
+
     T = 100000
     data_a = accelerating_model(T)
     with open("dataset.csv", "w") as f:
@@ -133,14 +134,12 @@ if __name__ == "__main__":
             f.write(", ".join([str(j) for j in i]) + "\n")
 
     fig, ax = plt.subplots(ncols=1)
-    
-    ax.plot(data_a[:,0])
-    ax.plot(data_a[:,1])
-    
-    
+
+    ax.plot(data_a[:, 0])
+    ax.plot(data_a[:, 1])
+
     plt.show()
-    
-    plt.plot(data_a[:,0], data_a[:,1])
-    
+
+    plt.plot(data_a[:, 0], data_a[:, 1])
+
     plt.show()
-    
