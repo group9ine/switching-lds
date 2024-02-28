@@ -63,10 +63,24 @@ def accelerating_model(T):
     x += np.random.normal(0, 0.001, size=(T + 1, 2))
     return x
 
+def circuit_one(pos):
+    if pos[0] > 1 and (pos[0] - 1) ** 2 + pos[1] ** 2 > 1:
+        return False
+    if pos[0] < -1 and (pos[0] + 1) ** 2 + pos[1] ** 2 > 1:
+        return False
+    if abs(pos[1]) > 1:
+        return False
+    if (pos[0] - 1) ** 2 + pos[1] ** 2 < 0.25:
+        return False
+    if (pos[0] + 1) ** 2 + pos[1] ** 2 < 0.25:
+        return False
+    if abs(pos[0]) < 1 and abs(pos[1]) < 0.5:
+        return False
+    return True
 
-def advanced_model(T):  ## don't use yet
-    x = [[1.8, 0]]
-    v = [0,0.5]
+def advanced_model(T, pos_in_circuit=circuit_one, startx=(1.8,0), startv=(0,0.5)):
+    x = [list(startx)]
+    v = list(startv)
     dt = 0.005
 
     def get_track_limits(pos, direction):
@@ -79,18 +93,9 @@ def advanced_model(T):  ## don't use yet
             pos[0] += direction[0] * dt
             pos[1] += direction[1] * dt
 
-            if pos[0] > 1 and (pos[0] - 1) ** 2 + pos[1] ** 2 > 1:
+            if not pos_in_circuit(pos):
                 break
-            if pos[0] < -1 and (pos[0] + 1) ** 2 + pos[1] ** 2 > 1:
-                break
-            if abs(pos[1]) > 1:
-                break
-            if (pos[0] - 1) ** 2 + pos[1] ** 2 < 0.25:
-                break
-            if (pos[0] + 1) ** 2 + pos[1] ** 2 < 0.25:
-                break
-            if abs(pos[0]) < 1 and abs(pos[1]) < 0.5:
-                break
+        
         return counter
     
     
