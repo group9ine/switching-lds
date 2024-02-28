@@ -65,17 +65,19 @@ def accelerating_model(T):
 
 
 def advanced_model(T):  ## don't use yet
-    x = [[-0.8, -0.8]]
-    v = [0.3, 0]
+    x = [[1.8, 0]]
+    v = [0,0.5]
     dt = 0.005
 
     def get_track_limits(pos, direction):
         pos = deepcopy(pos)
         counter = 0
+        mod = (direction[0]**2+direction[1]**2)**0.5
+        direction = [np.exp(mod)*direction[0]/mod, np.exp(mod)*direction[1]/mod]
         while True:
             counter += 1
-            pos[0] += direction[0] * dt * 0.1
-            pos[1] += direction[1] * dt * 0.1
+            pos[0] += direction[0] * dt
+            pos[1] += direction[1] * dt
 
             if pos[0] > 1 and (pos[0] - 1) ** 2 + pos[1] ** 2 > 1:
                 break
@@ -83,7 +85,13 @@ def advanced_model(T):  ## don't use yet
                 break
             if abs(pos[1]) > 1:
                 break
-        return counter / 10
+            if (pos[0] - 1) ** 2 + pos[1] ** 2 < 0.25:
+                break
+            if (pos[0] + 1) ** 2 + pos[1] ** 2 < 0.25:
+                break
+            if abs(pos[0]) < 1 and abs(pos[1]) < 0.5:
+                break
+        return counter
 
     for t in range(T):
         front_dist = get_track_limits(x[-1], v)
@@ -95,40 +103,37 @@ def advanced_model(T):  ## don't use yet
         f_l_dist = get_track_limits(
             x[-1], [(v[0] - v[1]) / 2, (v[1] + v[0]) / 2]
         )
-
-        if f_r_dist < 50:
-            v[0] -= v[1] * dt / 100
-            v[1] += v[0] * dt / 100
-        if f_l_dist < 50:
-            v[0] += v[1] * dt / 100
-            v[1] -= v[0] * dt / 100
-
-        if front_dist < 60:
-            v[0] *= 0.9
-            v[1] *= 0.9
-        elif front_dist > 200:
+        
+        
+        
+        ldr1 = -np.log(f_r_dist / f_l_dist) 
+        ldr2 = -np.log(right_dist / left_dist)
+        scale1 = 0.5
+        scale2 = 0.01
+        v[0] -= v[1] * dt * (scale1*ldr1+scale2*ldr2)
+        v[1] += v[0] * dt * (scale1*ldr1+scale2*ldr2)
+        
+        if front_dist < 20 and v[0]**2+v[1]**2>0.001:
+            v[0] *= 0.99
+            v[1] *= 0.99
+        elif front_dist > 100:
             v[0] *= 1.1
             v[1] *= 1.1
-
-        if right_dist < 10:
-            v[0] -= v[1] * dt / 3
-            v[1] += v[0] * dt / 3
-        if right_dist < 10:
-            v[0] += v[1] * dt / 3
-            v[1] -= v[0] * dt / 3
 
         x.append([x[-1][0] + v[0] * dt, x[-1][1] + v[1] * dt])
 
     x = np.array(x)
-    x += np.random.normal(0, 0.001, size=(T + 1, 2))
+    x += np.random.normal(0, 0.001, size=(len(x), 2))
     return x
 
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    T = 100000
-    data_a = accelerating_model(T)
+    T = 5000
+    #data_a = accelerating_model(T)
+    data_a = advanced_model(T)
+    
     with open("dataset.csv", "w") as f:
         for i in data_a:
             f.write(", ".join([str(j) for j in i]) + "\n")
