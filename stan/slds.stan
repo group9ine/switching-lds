@@ -27,14 +27,14 @@ data {
 
   // for Ab, Q
   matrix[M, M + 1] Mu_x;
-  matrix[M + 1, M + 1] Omega_x;  // given as precision = inverse cov
-  matrix[M, M] Psi_x;
+  cov_matrix[M + 1] Omega_x;  // given as precision = inverse cov
+  cov_matrix[M] Psi_x;
   real<lower=M - 1> nu_x;
 
   // for Cd, S
   matrix[N, M + 1] Mu_y;
-  matrix[M + 1, M + 1] Omega_y;
-  matrix[N, N] Psi_y;
+  cov_matrix[M + 1] Omega_y;
+  cov_matrix[N] Psi_y;
   real<lower=N - 1> nu_y;
 }
 
