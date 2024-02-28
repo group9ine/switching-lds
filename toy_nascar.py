@@ -122,7 +122,7 @@ if __name__=="__main__":
     #import matplotlib.pyplot as plt 
     T = 100000
     data_a = accelerating_model(T)
-    with f as open("dataset.csv"):
+    with open("dataset.csv") as f:
         for i in data_a:
             print(*i, sep=", ")
     
