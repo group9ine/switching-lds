@@ -122,9 +122,9 @@ if __name__=="__main__":
     #import matplotlib.pyplot as plt 
     T = 100000
     data_a = accelerating_model(T)
-    with open("dataset.csv") as f:
+    with open("dataset.csv", "w") as f:
         for i in data_a:
-            print(*i, sep=", ")
+            f.write(", ".join([str(j) for j in i])+"\n")
     
     """fig, ax = plt.subplots(ncols=1)
     
