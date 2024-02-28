@@ -81,7 +81,7 @@ model {
   y[1] ~ multi_normal_prec(C[z[1]] * x[1] + d[z[1]], S[z[1]]);
 
   for (t in 2:T) {
-    if (sum(trans[z[t - 1]] != 1.0)) print("ERROR");
+    if (sum(trans[z[t - 1]]) != 1.0) print("ERROR");
     z[t] ~ categorical(trans[z[t - 1]]);
     x[t] ~ multi_normal_prec(A[z[t]] * x[t - 1] + b[z[t]], Q[z[t]]);
     y[t] ~ multi_normal_prec(C[z[t]] * x[t] + d[z[t]], S[z[t]]);
