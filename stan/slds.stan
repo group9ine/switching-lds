@@ -19,11 +19,12 @@ data {
   vector[N] y[T];
 
   // initial hidden states
-  int init_z;
+  int<lower=1, upper=K> init_z;
   vector[M] init_x;
 
   // prior parameters
-  vector[K] alpha;  // for pi
+  real mu_z;
+  real<lower=0> sigma_z;
 
   // for Ab, Q
   matrix[M, M + 1] Mu_x;
@@ -39,7 +40,7 @@ data {
 }
 
 parameters {
-  simplex[K] trans[K];  // transition matrix
+  vector[K] trans_raw[K];  // transition matrix to be soft-maxed
 
   // linear parameters for x
   matrix[M, M + 1] Ab[K];
@@ -48,6 +49,13 @@ parameters {
   // linear parameters for y
   matrix[N, M + 1] Cd[K];
   cov_matrix[N] S[K];  // precision = inverse cov
+}
+
+transformed parameters {
+  simplex[K] trans[K];
+  for (k in 1:K) {
+    trans[k] = softmax(trans_raw[K]);
+  }
 }
 
 model {
@@ -62,7 +70,7 @@ model {
 
   // assigning priors
   for (k in 1:K) {
-    trans[k] ~ dirichlet(alpha);
+    trans_raw[k] ~ normal(mu_z, sigma_z);
 
     Q[k] ~ wishart(nu_x, Psi_x);
     Ab[k] ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
@@ -76,12 +84,14 @@ model {
   }
 
   // initialize hidden states
-  z[1] = init_z;
-  x[1] = init_x;
-  y[1] ~ multi_normal_prec(C[z[1]] * x[1] + d[z[1]], S[z[1]]);
+  //z[1] = init_z;
+  //x[1] = init_x;
+  //y[1] ~ multi_normal_prec(C[z[1]] * x[1] + d[z[1]], S[z[1]]);
+
+  for (k in 1:K) print(trans[1][k], " ");
+  print("\n");
 
   for (t in 2:T) {
-    if (sum(trans[z[t - 1]]) != 1.0) print("ERROR");
     z[t] ~ categorical(trans[z[t - 1]]);
     x[t] ~ multi_normal_prec(A[z[t]] * x[t - 1] + b[z[t]], Q[z[t]]);
     y[t] ~ multi_normal_prec(C[z[t]] * x[t] + d[z[t]], S[z[t]]);
