@@ -18,6 +18,10 @@ data {
   int<lower=1> T;  // length of the time series
   vector[N] y[T];
 
+  // initial hidden states
+  int init_z;
+  vector[M] init_x;
+
   // prior parameters
   vector[K] alpha;  // for pi
 
@@ -70,6 +74,11 @@ model {
     C[k] = Cd[k][, :M];
     d[k] = Cd[k][, M + 1];
   }
+
+  // initialize hidden states
+  z[1] = init_z;
+  x[1] = init_x;
+  y[1] ~ multi_normal_prec(C[z[1]] * x[1] + d[z[1]], S[z[1]]);
 
   for (t in 2:T) {
     z[t] ~ categorical(trans[z[t - 1]]);
