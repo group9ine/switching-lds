@@ -92,7 +92,8 @@ def advanced_model(T):  ## don't use yet
             if abs(pos[0]) < 1 and abs(pos[1]) < 0.5:
                 break
         return counter
-
+    
+    
     for t in range(T):
         front_dist = get_track_limits(x[-1], v)
         right_dist = get_track_limits(x[-1], [v[1], -v[0]])
@@ -104,19 +105,18 @@ def advanced_model(T):  ## don't use yet
             x[-1], [(v[0] - v[1]) / 2, (v[1] + v[0]) / 2]
         )
         
-        
-        
+        scale = 1/(1+np.exp((front_dist-75)/4))
         ldr1 = -np.log(f_r_dist / f_l_dist) 
         ldr2 = -np.log(right_dist / left_dist)
         scale1 = 0.5
         scale2 = 0.01
-        v[0] -= v[1] * dt * (scale1*ldr1+scale2*ldr2)
-        v[1] += v[0] * dt * (scale1*ldr1+scale2*ldr2)
+        v[0] -= v[1] * dt * (scale1*ldr1+scale2*ldr2) * scale
+        v[1] += v[0] * dt * (scale1*ldr1+scale2*ldr2) * scale
         
         if front_dist < 20 and v[0]**2+v[1]**2>0.001:
             v[0] *= 0.99
             v[1] *= 0.99
-        elif front_dist > 100:
+        elif front_dist > 90:
             v[0] *= 1.1
             v[1] *= 1.1
 
@@ -130,7 +130,7 @@ def advanced_model(T):  ## don't use yet
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
-    T = 5000
+    T = 100000
     #data_a = accelerating_model(T)
     data_a = advanced_model(T)
     
@@ -142,9 +142,10 @@ if __name__ == "__main__":
 
     ax.plot(data_a[:, 0])
     ax.plot(data_a[:, 1])
-
+    
     plt.show()
-
+    
     plt.plot(data_a[:, 0], data_a[:, 1])
 
     plt.show()
+    
