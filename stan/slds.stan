@@ -22,8 +22,8 @@ data {
   vector<lower=0>[K] alpha[K];
 
   // prior for the initial continuous latent state
-  vector[M] mu;
-  cov_matrix[M] Sigma;
+  //vector[M] mu;
+  //cov_matrix[M] Sigma;
 
   // for Ab, Q
   matrix[M, M + 1] Mu_x;
@@ -36,10 +36,12 @@ data {
   cov_matrix[M + 1] Omega_y;
   cov_matrix[N] Psi_y;
   real<lower=N - 1> nu_y;
+  
+  vector[M] init_x;
 }
 
 parameters {
-  matrix[K, K] pi;  // transition matrix to be soft-maxed
+  simplex[K] pi[K];  // transition matrix to be soft-maxed
 
   // linear parameters for x
   matrix[M, M + 1] Ab[K];
@@ -48,11 +50,12 @@ parameters {
   // linear parameters for y
   matrix[N, M + 1] Cd[K];
   cov_matrix[N] S[K];  // precision = inverse cov
+  
+  vector[M] x[T];  // continuous hidden states
 }
 
 model {
-  vector[M] x[T];  // continuous hidden states
-
+  
   // assigning priors to linear parameters
   for (k in 1:K) {
     Q[k] ~ wishart(nu_x, Psi_x);
@@ -69,20 +72,44 @@ model {
   vector[N] d[K] = Cd[:, :, M + 1];
 
   row_vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t])
-
+  
+  //x[1] = init_x;  //~ multi_normal(mu, Sigma);
+  
+  print("x1: ", x[1]);
+  print("y1: ", y[1]);
   for (k in 1:K) {
-    gamma[1, k] = dirichlet_lpdf(pi[k] | alpha[k])
-                + multi_normal_lpdf(x[1] | mu, Sigma)
+    print("A", k, "=", A[k]);
+    print("b", k, "=", b[k]);
+    print("Q", k, "=", Q[k]);
+    print("S", k, "=", S[k]);
+    print("C", k, "=", C[k]);
+    print("d", k, "=", d[k]);
+    
+    gamma[1, k] = dirichlet_lpdf(pi[k] | alpha[k]) 
+                + multi_normal_prec_lpdf(x[1] | A[k] * init_x + b[k], Q[k])
                 + multi_normal_prec_lpdf(y[1] | C[k] * x[1] + d[k], S[k]);
   }
-
+  print("x1: ", x[1]);
+  print("y1: ", y[1]);
+  
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] = log(gamma[t - 1] * pi[, k])
-                  + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
+      gamma[t, k] = log(gamma[t - 1] * to_vector(pi[, k]))
+                  + multi_normal_prec_lpdf(x[t] | A[k] * x[t-1] + b[k], Q[k])
                   + multi_normal_prec_lpdf(y[t] | C[k] * x[t] + d[k], S[k]);
+                  
     }
   }
-
+  
+  print("xT: ", x[T]);
+  print("xT: ", x[T]);
+  print(gamma[T]);
+  
   target += log_sum_exp(gamma[T]);
+  
+  print("ok");
 } 
+
+//end
+
+
