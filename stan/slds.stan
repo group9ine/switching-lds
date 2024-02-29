@@ -84,7 +84,7 @@ model {
                  + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
                  + multi_normal_prec_lpdf(y[t] | C[k] * x[t] + d[k], S[k]);
       }
-      gamma[t, k] = log_sum_exp(acc);            
+      gamma[t, k] = log_sum_exp(acc);
     }
   }
   
