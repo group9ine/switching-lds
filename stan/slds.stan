@@ -18,13 +18,12 @@ data {
   int<lower=1> T;  // length of the time series
   vector[N] y[T];
 
-  // initial hidden states
-  int<lower=1, upper=K> init_z;
-  vector[M] init_x;
+  // prior for the transition matrix rows
+  vector<lower=0>[K] alpha[K];
 
-  // prior parameters
-  real mu_z;
-  real<lower=0> sigma_z;
+  // prior for the initial continuous latent state
+  vector[M] mu;
+  cov_matrix[M] Sigma;
 
   // for Ab, Q
   matrix[M, M + 1] Mu_x;
@@ -40,7 +39,7 @@ data {
 }
 
 parameters {
-  vector[K] trans_raw[K];  // transition matrix to be soft-maxed
+  matrix[K, K] pi;  // transition matrix to be soft-maxed
 
   // linear parameters for x
   matrix[M, M + 1] Ab[K];
@@ -51,49 +50,39 @@ parameters {
   cov_matrix[N] S[K];  // precision = inverse cov
 }
 
-transformed parameters {
-  simplex[K] trans[K];
-  for (k in 1:K) {
-    trans[k] = softmax(trans_raw[K]);
-  }
-}
-
 model {
-  int z[T];        // discrete latent states
-  vector[M] x[T];  // continuous latent states
+  vector[M] x[T];  // continuous hidden states
 
-  // subset Ab and Cd for linear dynamics over x
-  matrix[M, M] A[K];
-  vector[M] b[K];
-  matrix[N, M] C[K];
-  vector[N] d[K];
-
-  // assigning priors
+  // assigning priors to linear parameters
   for (k in 1:K) {
-    trans_raw[k] ~ normal(mu_z, sigma_z);
-
     Q[k] ~ wishart(nu_x, Psi_x);
     Ab[k] ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
-    A[k] = Ab[k][, :M];
-    b[k] = Ab[k][, M + 1];
 
     S[k] ~ wishart(nu_y, Psi_y);
     Cd[k] ~ matrix_normal_prec(Mu_y, S[k], Omega_y);
-    C[k] = Cd[k][, :M];
-    d[k] = Cd[k][, M + 1];
   }
 
-  // initialize hidden states
-  //z[1] = init_z;
-  //x[1] = init_x;
-  //y[1] ~ multi_normal_prec(C[z[1]] * x[1] + d[z[1]], S[z[1]]);
+  // subset Ab and Cd for linear dynamics over x
+  matrix[M, M] A[K] = Ab[:, :, :M];
+  vector[M] b[K] = Ab[:, :, M + 1];
+  matrix[N, M] C[K] = Cd[:, :, :M];
+  vector[N] d[K] = Cd[:, :, M + 1];
 
-  for (k in 1:K) print(trans[1][k], " ");
-  print("\n");
+  row_vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t])
+
+  for (k in 1:K) {
+    gamma[1, k] = dirichlet_lpdf(pi[k] | alpha[k])
+                + multi_normal_lpdf(x[1] | mu, Sigma)
+                + multi_normal_prec_lpdf(y[1] | C[k] * x[1] + d[k], S[k]);
+  }
 
   for (t in 2:T) {
-    z[t] ~ categorical(trans[z[t - 1]]);
-    x[t] ~ multi_normal_prec(A[z[t]] * x[t - 1] + b[z[t]], Q[z[t]]);
-    y[t] ~ multi_normal_prec(C[z[t]] * x[t] + d[z[t]], S[z[t]]);
+    for (k in 1:K) {
+      gamma[t, k] = log(gamma[t - 1] * pi[, k])
+                  + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
+                  + multi_normal_prec_lpdf(y[t] | C[k] * x[t] + d[k], S[k]);
+    }
   }
-}
+
+  target += log_sum_exp(gamma[T]);
+} 
