@@ -186,7 +186,6 @@ if __name__ == "__main__":
     T = 100000
     # data_a = accelerating_model(T)
     #data_a = advanced_model(T)
-    #data_a = accelerating_model(T)
     data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
     
     with open("dataset.csv", "w") as f:
