@@ -1,0 +1,7 @@
+model {
+    ----bullshit----
+    for (k in 1:K) {
+        Q[k] ~ wishart()
+        Ab[k] ~ matrix-normal
+    }
+}
