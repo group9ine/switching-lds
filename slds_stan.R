@@ -7,9 +7,9 @@ nascar_full <- fread("data/nascar/dataset.csv", sep = ",")
 names(nascar_full) <- c("x", "y")
 
 # small subset
-nascar <- nascar_full[seq(1, nrow(nascar_full) / 10, 100)]
+nascar <- nascar_full[seq(1, 1e4, 100)]
 
-plot(nascar$x, nascar$y, type = "l")
+plot(nascar$x, nascar$y, type = "b")
 
 sm <- stan_model(
   file = "stan/slds.stan",
