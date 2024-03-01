@@ -42,11 +42,13 @@ parameters {
   simplex[K] pi[K];  // transition matrix to be soft-maxed
 
   // linear parameters for x
-  matrix[M, M + 1] Ab[K];
+  matrix[M, M] A[K];
+  vector[M] b[K];
   cov_matrix[M] Q[K];  // precision = inverse cov
 
   // linear parameters for y
-  matrix[N, M + 1] Cd[K];
+  matrix[N, M] C[K];
+  vector[N] d[K];
   cov_matrix[N] S[K];  // precision = inverse cov
   
   vector[M] x[T];  // continuous hidden states
@@ -56,17 +58,11 @@ model {
   // assigning priors to linear parameters
   for (k in 1:K) {
     Q[k] ~ wishart(nu_x, Psi_x);
-    Ab[k] ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
+    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
 
     S[k] ~ wishart(nu_y, Psi_y);
-    Cd[k] ~ matrix_normal_prec(Mu_y, S[k], Omega_y);
+    append_col(C[k], d[k]) ~ matrix_normal_prec(Mu_y, S[k], Omega_y);
   }
-
-  // subset Ab and Cd for linear dynamics over x
-  matrix[M, M] A[K] = Ab[:, :, :M];
-  vector[M] b[K] = Ab[:, :, M + 1];
-  matrix[N, M] C[K] = Cd[:, :, :M];
-  vector[N] d[K] = Cd[:, :, M + 1];
 
   real acc[K];
   real gamma[T, K];  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t])

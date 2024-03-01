@@ -31,7 +31,8 @@ parameters {
   simplex[K] pi[K];  // transition matrix to be soft-maxed
 
   // linear parameters for y
-  matrix[N, N + 1] Ab[K];
+  matrix[N, N] A[K];
+  vector[N] b[K];
   cov_matrix[N] Q[K];  // precision = inverse cov
 }
 
@@ -39,12 +40,8 @@ model {
   // assigning priors to linear parameters
   for (k in 1:K) {
     Q[k] ~ wishart(nu, Psi);
-    Ab[k] ~ matrix_normal_prec(Mu, Q[k], Omega);
+    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu, Q[k], Omega);
   }
-
-  // subset Ab and Cd for linear dynamics
-  matrix[N, N] A[K] = Ab[, , 1:N];
-  vector[N] b[K] = Ab[, , N + 1];
 
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, y[1:t]) 
 
@@ -54,7 +51,8 @@ model {
   
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] = log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
+      gamma[t, k] =
+        log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
         + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
