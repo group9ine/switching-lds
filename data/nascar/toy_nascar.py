@@ -79,19 +79,13 @@ def circuit_one(pos):
         return False
     return True
 
-<<<<<<< Updated upstream
 
-def advanced_model(
-    T, pos_in_circuit=circuit_one, startx=(1.8, 0), startv=(0, 0.5)
-):
-=======
 def advanced_model(T, pos_in_circuit=circuit_one, startx=(1.8,0), startv=(0,0.5)):
     """
     pos_in_circuit must be a function that takes a len-2 array-like object and returns True for points inside the circuit and False for points outside it.
         Note that the parameters used here may not be appropriate for circuits of width>0.5 and maximum length of the straight parts >~1.
         Remember to change starting position and speed as appropriate, running a few tests to check convergence.
     """
->>>>>>> Stashed changes
     x = [list(startx)]
     v = list(startv)
     dt = 0.005
