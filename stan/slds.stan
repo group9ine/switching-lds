@@ -49,7 +49,7 @@ model {
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, y[1:t]) 
 
   for (k in 1:K) {
-    gamma[1, k] += dirichlet_lpdf(pi[k] | alpha[k]);
+    gamma[1, k] = dirichlet_lpdf(pi[k] | alpha[k]);
   }
   
   for (t in 2:T) {
