@@ -101,8 +101,8 @@ generated quantities {
         eta[t, k] = negative_infinity();
         for (j in 1:K) {
           real logp;
-          logp = eta[t - 1, j] + log(pi[k,j])
-                 + multi_normal_prec_lpdf(x[t] | A[j] * x[t - 1] + b[j], Q[j])
+          logp = eta[t - 1, j] + log(pi[j,k])
+                 + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
                  + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
           
           if (logp > eta[t, k]) {
