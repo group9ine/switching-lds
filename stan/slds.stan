@@ -60,7 +60,6 @@ model {
   target += log_sum_exp(gamma[T]);
 }
 
-
 generated quantities {
   array[T] int<lower=1, upper=K> z_star;
   real log_p_z_star;
