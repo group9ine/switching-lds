@@ -88,7 +88,7 @@ generated quantities {
   real log_p_y_star;
   {
     array[T, K] int back_ptr;
-    vector[T] eta[K];
+    vector[K] eta[T];
     
     eta[1] = rep_vector(multi_normal_lpdf(x[1] | mu, Sigma)
                         + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S), K);
@@ -101,13 +101,12 @@ generated quantities {
         eta[t, k] = negative_infinity();
         for (j in 1:K) {
           real logp;
-          logp = eta[t - 1, j] + log(pi[j,k])
+          logp = eta[t - 1, j] + log(pi[k,j])
                  + multi_normal_prec_lpdf(x[t] | A[j] * x[t - 1] + b[j], Q[j])
                  + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
           
           if (logp > eta[t, k]) {
             back_ptr[t, k] = j;
-            print(j);
             eta[t, k] = logp;
           }
         }
