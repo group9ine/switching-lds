@@ -6,10 +6,12 @@ data = read.csv("data/nascar/dataset.csv")
 #plot(data$x, data$y, type="l")
 
 mod_data=NULL
-mod_data$x=data[seq(1,length(data), 100)]
-mod_data$T=length(mod_data$y)
+mod_data$x=data[seq(1,nrow(data)/10, 100),]
+mod_data$T=length(mod_data$x)
 mod_data$K=4
 mod_data$D=2
+
+# #load.module("") #if the ddirch is in another module, not sure
 
 mod <- jags.model("jags/slds.bug", mod_data)
 
