@@ -26,10 +26,10 @@ data {
   vector<lower=0>[K] alpha[K];
 
   // for Ab, Q
-  matrix[M, M + 1] Mu_x;
-  cov_matrix[M + 1] Omega_x;  // given as precision = inverse cov
-  cov_matrix[M] Psi_x;
-  real<lower=M - 1> nu_x;
+  matrix[M, M + 1] Mu_x[K];
+  cov_matrix[M + 1] Omega_x[K];  // given as precision = inverse cov
+  cov_matrix[M] Psi_x[K];
+  real<lower=M - 1> nu_x[K];
 
   // for Cd, S
   matrix[N, M + 1] Mu_y;
@@ -57,8 +57,8 @@ parameters {
 model {
   // assigning priors to linear parameters
   for (k in 1:K) {
-    Q[k] ~ wishart(nu_x, Psi_x);
-    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu_x, Q[k], Omega_x);
+    Q[k] ~ wishart(nu_x[k], Psi_x[k]);
+    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu_x[k], Q[k], Omega_x[k]);
   }
 
   S ~ wishart(nu_y, Psi_y);

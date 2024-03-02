@@ -21,10 +21,10 @@ data {
   vector<lower=0>[K] alpha[K];
 
   // for Ab, Q
-  matrix[N, N + 1] Mu;
-  cov_matrix[N + 1] Omega;  // given as precision = inverse cov
-  cov_matrix[N] Psi;
-  real<lower=N - 1> nu;
+  matrix[N, N + 1] Mu[K];
+  cov_matrix[N + 1] Omega[K];  // given as precision = inverse cov
+  cov_matrix[N] Psi[K];
+  real<lower=N - 1> nu[K];
 }
 
 parameters {
@@ -39,8 +39,8 @@ parameters {
 model {
   // assigning priors to linear parameters
   for (k in 1:K) {
-    Q[k] ~ wishart(nu, Psi);
-    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu, Q[k], Omega);
+    Q[k] ~ wishart(nu[k], Psi[k]);
+    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu[k], Q[k], Omega[k]);
   }
 
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, y[1:t]) 
@@ -70,7 +70,7 @@ generated quantities {
     vector[K] eta[T];
 
     for (k in 1:K) {
-      eta[1, k] += dirichlet_lpdf(pi[k] | alpha[k]);
+      eta[1, k] = dirichlet_lpdf(pi[k] | alpha[k]);
     }
 
     for (t in 2:T) {
