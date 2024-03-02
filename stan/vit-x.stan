@@ -101,28 +101,30 @@ generated quantities {
         eta[t, k] = negative_infinity();
         for (j in 1:K) {
           real logp;
-          logp = eta[t - 1, j] + log(to_vector(pi[, j]))
+          logp = eta[t - 1, j] + log(pi[j,k])
                  + multi_normal_prec_lpdf(x[t] | A[j] * x[t - 1] + b[j], Q[j])
                  + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
           
           if (logp > eta[t, k]) {
             back_ptr[t, k] = j;
+            print(j);
             eta[t, k] = logp;
           }
         }
       }
     }
-    log_p_y_star = max(mu[T]);
+    log_p_y_star = max(eta[T]);
     
     for (k in 1:K) {
-      if (best_logp[T, k] == log_p_y_star) {
+      if (eta[T, k] == log_p_y_star) {
         y_star[T] = k;
       }
     }
-    for (t in 1:(T_unsup - 1)) {
-      y_star[T - t] = back_ptr[T - t + 1,
-      y_star[T - t + 1]];
+    for (t in 1:(T - 1)) {
+      y_star[T - t] = back_ptr[T - t + 1, y_star[T - t + 1]];
     }
   }
 }
+
+
 
