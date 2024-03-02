@@ -11,6 +11,14 @@ nascar <- nascar_full[seq(1, 1e4, 100)]
 
 plot(nascar$x, nascar$y, type = "b")
 
+# simpler data (triangle wave)
+period <- 2 * pi
+x <- seq(0, 50, length.out = 400)
+triangle <- \(x, period) 2 * abs((x %% period) - 0.5 * period) / period
+trwv <- triangle(x, period)
+
+plot(x, trwv, type = "b")
+
 sm <- stan_model(
   file = "stan/slds.stan",
   model_name = "SLDS",
