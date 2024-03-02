@@ -25,8 +25,14 @@ sm <- stan_model(
   allow_optimizations = TRUE
 )
 
-fit <- sampling(
-  sm, data = list(
+sm_x <- stan_model(
+  file = "stan/slds-x.stan",
+  model_name = "SLDS",
+  allow_optimizations = TRUE
+)
+
+fit_x <- sampling(
+  sm_x, data = list(
     K = 4, M = 2, N = ncol(nascar), T = nrow(nascar),
     y = as.list(transpose(nascar)),
     alpha = matrix(1, nrow = 4, ncol = 4),
@@ -39,6 +45,19 @@ fit <- sampling(
     Omega_y = solve(matrix(c(1, 0.5, 0, 0.5, 1, 0.5, 0, 0.5, 1), nrow = 3)),
     Psi_y = solve(matrix(c(1, 0, 0, 1), nrow = 2)) / 2,
     nu_y = 2
+  ),
+  chains = 2, iter = 300
+)
+
+fit <- sampling(
+  sm, data = list(
+    K = 4, M = 2, N = ncol(nascar), T = nrow(nascar),
+    y = as.list(transpose(nascar)),
+    alpha = matrix(1, nrow = 4, ncol = 4),
+    Mu = matrix(0, nrow = 2, ncol = 3),
+    Omega = solve(matrix(c(1, 0.5, 0, 0.5, 1, 0.5, 0, 0.5, 1), nrow = 3)),
+    Psi = solve(matrix(c(1, 0, 0, 1), nrow = 2)) / 2,
+    nu = 2
   ),
   chains = 2, iter = 300
 )

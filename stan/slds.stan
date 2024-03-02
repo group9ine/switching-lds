@@ -59,3 +59,45 @@ model {
   
   target += log_sum_exp(gamma[T]);
 }
+
+
+generated quantities {
+  array[T] int<lower=1, upper=K> z_star;
+  real log_p_z_star;
+
+  {
+    array[T, K] int back_ptr;
+    vector[K] eta[T];
+
+    for (k in 1:K) {
+      eta[1, k] += dirichlet_lpdf(pi[k] | alpha[k]);
+    }
+
+    for (t in 2:T) {
+      for (k in 1:K) {
+        eta[t, k] = negative_infinity();
+        for (j in 1:K) {
+          real logp;
+          logp = eta[t - 1, j] + log(pi[j, k])
+                 + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
+
+          if (logp > eta[t, k]) {
+            back_ptr[t, k] = j;
+            eta[t, k] = logp;
+          }
+        }
+      }
+    }
+
+    log_p_z_star = max(eta[T]);
+
+    for (k in 1:K) {
+      if (eta[T, k] == log_p_z_star) {
+        z_star[T] = k;
+      }
+    }
+    for (t in 1:(T - 1)) {
+      z_star[T - t] = back_ptr[T - t + 1, z_star[T - t + 1]];
+    }
+  }
+}
