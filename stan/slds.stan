@@ -60,7 +60,6 @@ model {
   target += log_sum_exp(gamma[T]);
 }
 
-
 generated quantities {
   array[T] int<lower=1, upper=K> z_star;
   real log_p_z_star;
@@ -70,7 +69,7 @@ generated quantities {
     vector[K] eta[T];
 
     for (k in 1:K) {
-      eta[1, k] += dirichlet_lpdf(pi[k] | alpha[k]);
+      eta[1, k] = dirichlet_lpdf(pi[k] | alpha[k]);
     }
 
     for (t in 2:T) {
