@@ -7,7 +7,7 @@ data = read.csv("data/nascar/dataset.csv")
 
 mod_data=NULL
 mod_data$x=data[seq(1,nrow(data)/10, 100),]
-mod_data$T=length(mod_data$x)
+mod_data$T=nrow(mod_data$x)
 mod_data$K=4
 mod_data$D=2
 
@@ -19,5 +19,5 @@ update(mod, 1000) # burn-in
 
 chain <- coda.samples(mod , c("z", "x"), n.iter=10000) # sample
 
-summary(chain)
-plot(chain)
+#summary(chain)
+#plot(chain)
