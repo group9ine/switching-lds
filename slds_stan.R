@@ -1,4 +1,5 @@
 library(data.table)
+library(ggplot2)
 library(rstan)
 options(mc.cores = parallel::detectCores() - 2)
 rstan_options(auto_write = TRUE)
@@ -12,8 +13,8 @@ nascar <- nascar_full[seq(1, 1e4, 100)]
 plot(nascar$x, nascar$y, type = "b")
 
 # simpler data (triangle wave)
-period <- 2 * pi
-x <- seq(0, 50, length.out = 400)
+period <- 15
+x <- seq(0, 50, length.out = 500)
 triangle <- \(x, period) 2 * abs((x %% period) - 0.5 * period) / period 
 trwv <- triangle(x, period) + rnorm(length(x), 0, 0.1) - 0.5
 
@@ -39,22 +40,31 @@ length(square_wave)
 
 # one layer model
 sm <- stan_model(
-  file = "stan/hmm.stan",
+  file = "stan/slds.stan",
   model_name = "SLDS",
   allow_optimizations = TRUE
 )
 
 fit <- sampling(
   sm, data = list(
-    K = 2, M = 1, N = 1, T = length(square_wave),
-    y = matrix(square_wave, ncol=1),
-    Mu = matrix(c(1,-1)),
-    lambda = c(1,1),
+    K = 2, M = 1, N = 1, T = length(trwv),
+    y = matrix(trwv, ncol = 1),
+    Mu = list(matrix(c(1, -1), ncol = 2), matrix(c(-1, 1), ncol = 2)),
+    Omega = lapply(1:2, \(i) diag(1, 2)),
     Psi = lapply(1:2, \(i) matrix(1)),
-    nu = c(1,1)
+    nu = c(1, 1)
   ),
-  chains = 6, iter = 2000
+  chains = 2, iter = 2000
 )
+
+A <- extract(
+  fit, pars = c("A[1,1,1]", "A[2,1,1]"),
+  permuted = FALSE, inc_warmup = FALSE
+) |> as.data.table()
+
+ggplot(A, aes(value, fill = parameters)) +
+  geom_histogram(bins = 50, position = "identity", alpha = 0.5) +
+  facet_grid(rows = vars(chains))
 
 # x-y layers model
 sm_x <- stan_model(
@@ -85,7 +95,5 @@ x_smp <- extract(fit, "x")$x
 dim(x_smp) <- c(dim(x_smp)[1] * dim(x_smp)[2], dim(x_smp)[3])
 x_smp <- as.data.table(x_smp)
 setnames(x_smp, c("x1", "x2"))
-
-library(ggplot2)
 
 ggplot(x_smp, aes(x1, x2)) + geom_bin2d(bins = 70)
