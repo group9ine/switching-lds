@@ -17,9 +17,6 @@ data {
   int<lower=1> T;  // length of the time series
   vector[N] y[T];
 
-  // prior for the transition matrix rows
-  vector<lower=0>[K] alpha[K];
-
   // for Ab, Q
   matrix[N, N + 1] Mu[K];
   cov_matrix[N + 1] Omega[K];  // given as precision = inverse cov
@@ -45,9 +42,7 @@ model {
 
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, y[1:t]) 
 
-  for (k in 1:K) {
-    gamma[1, k] = dirichlet_lpdf(pi[k] | alpha[k]);
-  }
+  gamma[1] = rep_vector(-log(K), K);
   
   for (t in 2:T) {
     for (k in 1:K) {
@@ -68,23 +63,22 @@ generated quantities {
     array[T, K] int back_ptr;
     vector[K] eta[T];
 
-    for (k in 1:K) {
-      eta[1, k] = dirichlet_lpdf(pi[k] | alpha[k]);
-    }
-
+    eta[1] = rep_vector(-log(K), K);
+ 
     for (t in 2:T) {
       for (k in 1:K) {
-        eta[t, k] = negative_infinity();
+        real tmp_logp;
+        real max_logp = negative_infinity();
         for (j in 1:K) {
-          real logp;
-          logp = eta[t - 1, j] + log(pi[j, k])
-                 + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
-
-          if (logp > eta[t, k]) {
+          tmp_logp = eta[t - 1, j] + log(pi[j, k]);
+          if (tmp_logp > max_logp) {
+            max_logp = tmp_logp;
             back_ptr[t, k] = j;
-            eta[t, k] = logp;
           }
         }
+        
+        eta[t, k] = max_logp
+                    + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
       }
     }
 
@@ -93,10 +87,13 @@ generated quantities {
     for (k in 1:K) {
       if (eta[T, k] == log_p_z_star) {
         z_star[T] = k;
+        break;
       }
     }
+    
     for (t in 1:(T - 1)) {
       z_star[T - t] = back_ptr[T - t + 1, z_star[T - t + 1]];
     }
   }
 }
+

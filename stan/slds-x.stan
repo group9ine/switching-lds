@@ -22,9 +22,6 @@ data {
   vector[M] mu;
   cov_matrix[M] Sigma;
 
-  // prior for the transition matrix rows
-  vector<lower=0>[K] alpha[K];
-
   // for Ab, Q
   matrix[M, M + 1] Mu_x[K];
   cov_matrix[M + 1] Omega_x[K];  // given as precision = inverse cov
@@ -67,10 +64,8 @@ model {
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t]) 
 
   gamma[1] = rep_vector(multi_normal_lpdf(x[1] | mu, Sigma)
-                        + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S), K);
-  for (k in 1:K) {
-    gamma[1, k] += dirichlet_lpdf(pi[k] | alpha[k]);
-  }
+                        + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S)
+                        - log(K), K)
   
   for (t in 2:T) {
     for (k in 1:K) {
@@ -92,25 +87,24 @@ generated quantities {
     vector[K] eta[T];
 
     eta[1] = rep_vector(multi_normal_lpdf(x[1] | mu, Sigma)
-                        + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S), K);
-    for (k in 1:K) {
-      eta[1, k] += dirichlet_lpdf(pi[k] | alpha[k]);
-    }
+                        + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S)
+                        -log(K), K);
  
     for (t in 2:T) {
       for (k in 1:K) {
-        eta[t, k] = negative_infinity();
+        real tmp_logp;
+        real max_logp = negative_infinity();
         for (j in 1:K) {
-          real logp;
-          logp = eta[t - 1, j] + log(pi[j, k])
-                 + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
-                 + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
-     
-          if (logp > eta[t, k]) {
+          tmp_logp = eta[t - 1, j] + log(pi[j, k]);
+          if (tmp_logp > max_logp) {
+            max_logp = tmp_logp;
             back_ptr[t, k] = j;
-            eta[t, k] = logp;
           }
         }
+        
+        eta[t, k] = max_logp
+                    + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
+                    + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
       }
     }
 
@@ -119,8 +113,10 @@ generated quantities {
     for (k in 1:K) {
       if (eta[T, k] == log_p_z_star) {
         z_star[T] = k;
+        break;
       }
     }
+    
     for (t in 1:(T - 1)) {
       z_star[T - t] = back_ptr[T - t + 1, z_star[T - t + 1]];
     }

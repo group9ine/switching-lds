@@ -15,7 +15,7 @@ plot(nascar$x, nascar$y, type = "b")
 period <- 2 * pi
 x <- seq(0, 50, length.out = 400)
 triangle <- \(x, period) 2 * abs((x %% period) - 0.5 * period) / period 
-trwv <- triangle(x, period) + rnorm(length(x), 0, 0.1)
+trwv <- triangle(x, period) + rnorm(length(x), 0, 0.1) - 0.5
 
 plot(x, trwv, type = "b")
 
@@ -30,10 +30,9 @@ fit <- sampling(
   sm, data = list(
     K = 2, M = 1, N = 1, T = length(trwv),
     y = matrix(trwv, ncol=1),
-    alpha = matrix(c(1, 0.8, 0.8, 1), nrow = 2, ncol = 2),
-    Mu = list( matrix(c(1,0), ncol=2), matrix(c(-1,1), ncol=2)),
-    Omega = lapply(1:2, \(i) diag(1, 2)),
-    Psi = lapply(1:2, \(i) matrix(3)),
+    Mu = list( matrix(c(1,-1), ncol=2), matrix(c(-1,1), ncol=2)),
+    Omega = lapply(1:2, \(i) diag(10, 2)),
+    Psi = lapply(1:2, \(i) matrix(30)),
     nu = c(1,1)
   ),
   chains = 6, iter = 2000
