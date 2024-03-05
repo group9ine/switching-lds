@@ -19,20 +19,38 @@ trwv <- triangle(x, period) + rnorm(length(x), 0, 0.1) - 0.5
 
 plot(x, trwv, type = "b")
 
+# square wave
+generate_square_wave <- function(frequency, duration, sampling_rate) {
+  t <- seq(0, duration, by = 1/sampling_rate)
+  square_wave <- sign(sin(2 * pi * frequency * t))
+  return(square_wave)
+}
+
+frequency <- 8   # Frequency of the square wave in Hertz
+duration <- 5    # Duration of the square wave in seconds
+sampling_rate <- 100  # Sampling rate in Hz
+
+square_wave <- generate_square_wave(frequency, duration, sampling_rate)
+square_wave <- square_wave + rnorm(length(square_wave),0,0.05)
+
+plot(seq(0, duration, by = 1/sampling_rate), square_wave, type = 'l',
+     main = 'Square Wave', xlab = 'Time (s)', ylab = 'Amplitude')
+length(square_wave)
+
 # one layer model
 sm <- stan_model(
-  file = "stan/slds.stan",
+  file = "stan/hmm.stan",
   model_name = "SLDS",
   allow_optimizations = TRUE
 )
 
 fit <- sampling(
   sm, data = list(
-    K = 2, M = 1, N = 1, T = length(trwv),
-    y = matrix(trwv, ncol=1),
-    Mu = list( matrix(c(1,-1), ncol=2), matrix(c(-1,1), ncol=2)),
-    Omega = lapply(1:2, \(i) diag(10, 2)),
-    Psi = lapply(1:2, \(i) matrix(30)),
+    K = 2, M = 1, N = 1, T = length(square_wave),
+    y = matrix(square_wave, ncol=1),
+    Mu = matrix(c(1,-1)),
+    lambda = c(1,1),
+    Psi = lapply(1:2, \(i) matrix(1)),
     nu = c(1,1)
   ),
   chains = 6, iter = 2000
