@@ -1,7 +1,4 @@
 model {
-    ## Needs to have defined Id (identity with dimenstion D = dimension of x datapoint),
-    ### Id2 (identity with dimension D+1), and Od (vector of zeros, dimension D).
-    ### Will try to define them in model
     
     # useful variables
     for (d in 1:D) {
