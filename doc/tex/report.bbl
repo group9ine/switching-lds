@@ -1,0 +1,293 @@
+% $ biblatex auxiliary file $
+% $ biblatex bbl format version 3.2 $
+% Do not modify the above lines!
+%
+% This is an auxiliary file used by the 'biblatex' package.
+% This file may safely be deleted. It will be recreated by
+% biber as required.
+%
+\begingroup
+\makeatletter
+\@ifundefined{ver@biblatex.sty}
+  {\@latex@error
+     {Missing 'biblatex' package}
+     {The bibliography requires the 'biblatex' package.}
+      \aftergroup\endinput}
+  {}
+\endgroup
+
+
+\refsection{0}
+  \datalist[entry]{nty/global//global/global}
+    \entry{Carpenter17}{article}{}
+      \name{author}{10}{}{%
+        {{hash=5321a7ac2b0407bc405fa8816fd73f09}{%
+           family={Carpenter},
+           familyi={C\bibinitperiod},
+           given={Bob},
+           giveni={B\bibinitperiod}}}%
+        {{hash=1e1eb60e3b6e222217bf8e9b24070b28}{%
+           family={Gelman},
+           familyi={G\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+        {{hash=937991c72400f4d0e0252027c8c03f67}{%
+           family={Hoffman},
+           familyi={H\bibinitperiod},
+           given={Matthew\bibnamedelima D.},
+           giveni={M\bibinitperiod\bibinitdelim D\bibinitperiod}}}%
+        {{hash=fb04571d965766ee6d71dafbd3eb452e}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=9cc812cde8c441e79dfaab4955a72c2c}{%
+           family={Goodrich},
+           familyi={G\bibinitperiod},
+           given={Ben},
+           giveni={B\bibinitperiod}}}%
+        {{hash=1982fa604a3f94837efceaa53330b2a4}{%
+           family={Betancourt},
+           familyi={B\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=13e542215366001a04c3d21163d79458}{%
+           family={Brubaker},
+           familyi={B\bibinitperiod},
+           given={Marcus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=41eee90a96d38ce11a198e6c0aeb415f}{%
+           family={Guo},
+           familyi={G\bibinitperiod},
+           given={Jiqiang},
+           giveni={J\bibinitperiod}}}%
+        {{hash=137297e0019ba55bca6f9b200782ae52}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+        {{hash=6f0d8885ad4c012b0ced0ee95cdf2729}{%
+           family={Riddell},
+           familyi={R\bibinitperiod},
+           given={Allen},
+           giveni={A\bibinitperiod}}}%
+      }
+      \strng{namehash}{315a7c9e1cdeecc523de3b4d0e029d66}
+      \strng{fullhash}{29572594759b21c576aa9533a18a00d1}
+      \strng{bibnamehash}{315a7c9e1cdeecc523de3b4d0e029d66}
+      \strng{authorbibnamehash}{315a7c9e1cdeecc523de3b4d0e029d66}
+      \strng{authornamehash}{315a7c9e1cdeecc523de3b4d0e029d66}
+      \strng{authorfullhash}{29572594759b21c576aa9533a18a00d1}
+      \field{sortinit}{C}
+      \field{sortinithash}{4d103a86280481745c9c897c925753c0}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Statistical Software}
+      \field{number}{1}
+      \field{title}{Stan: A Probabilistic Programming Language}
+      \field{volume}{76}
+      \field{year}{2017}
+      \field{pages}{1\bibrangedash 32}
+      \range{pages}{32}
+      \verb{doi}
+      \verb 10.18637/jss.v076.i01
+      \endverb
+      \verb{urlraw}
+      \verb https://www.jstatsoft.org/index.php/jss/article/view/v076i01
+      \endverb
+      \verb{url}
+      \verb https://www.jstatsoft.org/index.php/jss/article/view/v076i01
+      \endverb
+    \endentry
+    \entry{Damiano2018}{inproceedings}{}
+      \name{author}{3}{}{%
+        {{hash=a400a5c83c85eeebe02bee282a66b95c}{%
+           family={Damiano},
+           familyi={D\bibinitperiod},
+           given={Luis},
+           giveni={L\bibinitperiod}}}%
+        {{hash=9add7d1f38e2dc0df40169f30ad0e46c}{%
+           family={Peterson},
+           familyi={P\bibinitperiod},
+           given={Brian},
+           giveni={B\bibinitperiod}}}%
+        {{hash=4b1c5d609bc95f689e574a5f87a2b311}{%
+           family={Weylandt},
+           familyi={W\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+      }
+      \list{organization}{1}{%
+        {Asilomar}%
+      }
+      \list{publisher}{1}{%
+        {Zenodo}%
+      }
+      \strng{namehash}{64123b4fc00727efe2e3ac7ee2e12f32}
+      \strng{fullhash}{64123b4fc00727efe2e3ac7ee2e12f32}
+      \strng{bibnamehash}{64123b4fc00727efe2e3ac7ee2e12f32}
+      \strng{authorbibnamehash}{64123b4fc00727efe2e3ac7ee2e12f32}
+      \strng{authornamehash}{64123b4fc00727efe2e3ac7ee2e12f32}
+      \strng{authorfullhash}{64123b4fc00727efe2e3ac7ee2e12f32}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{day}{10}
+      \field{eventday}{10}
+      \field{eventmonth}{1}
+      \field{eventtitle}{StanCon 2018}
+      \field{eventyear}{2018}
+      \field{month}{1}
+      \field{title}{A tutorial on hidden Markov models using Stan}
+      \field{venue}{Asilomar Conference Center, California}
+      \field{year}{2018}
+      \field{dateera}{ce}
+      \field{eventdateera}{ce}
+      \verb{doi}
+      \verb 10.5281/zenodo.1284341
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.5281/zenodo.1284341
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.5281/zenodo.1284341
+      \endverb
+    \endentry
+    \entry{Linderman17}{inproceedings}{}
+      \name{author}{6}{}{%
+        {{hash=79fae04d846cd5ea144f7a8e4821387f}{%
+           family={Linderman},
+           familyi={L\bibinitperiod},
+           given={Scott\bibnamedelima W.},
+           giveni={S\bibinitperiod\bibinitdelim W\bibinitperiod}}}%
+        {{hash=0ca5cc1992c89ca9d82473694402bd60}{%
+           family={Johnson},
+           familyi={J\bibinitperiod},
+           given={Matthew\bibnamedelima J.},
+           giveni={M\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=9a79a526d31c9308f0cd653d050584b0}{%
+           family={Miller},
+           familyi={M\bibinitperiod},
+           given={Andrew\bibnamedelima C.},
+           giveni={A\bibinitperiod\bibinitdelim C\bibinitperiod}}}%
+        {{hash=c1552be0c6aa9c6e0fd91a130a682853}{%
+           family={Adams},
+           familyi={A\bibinitperiod},
+           given={Ryan\bibnamedelima P.},
+           giveni={R\bibinitperiod\bibinitdelim P\bibinitperiod}}}%
+        {{hash=108998f0d44d4dce8ccb93e4d78cd5c6}{%
+           family={Blei},
+           familyi={B\bibinitperiod},
+           given={David\bibnamedelima M.},
+           giveni={D\bibinitperiod\bibinitdelim M\bibinitperiod}}}%
+        {{hash=b5ff96deb16b77fe4a862b665ba9b0c9}{%
+           family={Paninski},
+           familyi={P\bibinitperiod},
+           given={Liam},
+           giveni={L\bibinitperiod}}}%
+      }
+      \name{editor}{2}{}{%
+        {{hash=d77c73a14b0f048484c1d34aba3071d4}{%
+           family={Singh},
+           familyi={S\bibinitperiod},
+           given={Aarti},
+           giveni={A\bibinitperiod}}}%
+        {{hash=39c902c926e80826b55032878c4a4b49}{%
+           family={Zhu},
+           familyi={Z\bibinitperiod},
+           given={Jerry},
+           giveni={J\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {PMLR}%
+      }
+      \strng{namehash}{bc0391d92061579d0e57da12c45ee2ea}
+      \strng{fullhash}{ad78cff8652e19c169eb93d30241fa6e}
+      \strng{bibnamehash}{bc0391d92061579d0e57da12c45ee2ea}
+      \strng{authorbibnamehash}{bc0391d92061579d0e57da12c45ee2ea}
+      \strng{authornamehash}{bc0391d92061579d0e57da12c45ee2ea}
+      \strng{authorfullhash}{ad78cff8652e19c169eb93d30241fa6e}
+      \strng{editorbibnamehash}{76ce338934df3b777883645db0b56555}
+      \strng{editornamehash}{76ce338934df3b777883645db0b56555}
+      \strng{editorfullhash}{76ce338934df3b777883645db0b56555}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Proceedings of the 20th International Conference on Artificial Intelligence and Statistics}
+      \field{month}{4}
+      \field{series}{Proceedings of Machine Learning Research}
+      \field{title}{Bayesian Learning and Inference in Recurrent Switching Linear Dynamical Systems}
+      \field{volume}{54}
+      \field{year}{2017}
+      \field{pages}{914\bibrangedash 922}
+      \range{pages}{9}
+      \verb{file}
+      \verb http://proceedings.mlr.press/v54/linderman17a/linderman17a.pdf
+      \endverb
+      \verb{urlraw}
+      \verb https://proceedings.mlr.press/v54/linderman17a.html
+      \endverb
+      \verb{url}
+      \verb https://proceedings.mlr.press/v54/linderman17a.html
+      \endverb
+    \endentry
+    \entry{RStan24}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=38cdaa762a62c2f6e7ff4a46c1ce1705}{%
+           family={{Stan Development Team}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{fullhash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{bibnamehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{authorbibnamehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{authornamehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{authorfullhash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \field{extraname}{1}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{note}{R package version 2.32.6}
+      \field{title}{{RStan}: the {R} interface to {Stan}}
+      \field{year}{2024}
+      \verb{urlraw}
+      \verb https://mc-stan.org/
+      \endverb
+      \verb{url}
+      \verb https://mc-stan.org/
+      \endverb
+    \endentry
+    \entry{Stan24}{misc}{}
+      \name{author}{1}{}{%
+        {{hash=38cdaa762a62c2f6e7ff4a46c1ce1705}{%
+           family={{Stan Development Team}},
+           familyi={S\bibinitperiod}}}%
+      }
+      \strng{namehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{fullhash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{bibnamehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{authorbibnamehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{authornamehash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \strng{authorfullhash}{38cdaa762a62c2f6e7ff4a46c1ce1705}
+      \field{extraname}{2}
+      \field{sortinit}{S}
+      \field{sortinithash}{b164b07b29984b41daf1e85279fbc5ab}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{title}{Stan Modeling Language Users Guide and Reference Manual}
+      \field{version}{2.34}
+      \field{year}{2024}
+      \verb{urlraw}
+      \verb https://mc-stan.org
+      \endverb
+      \verb{url}
+      \verb https://mc-stan.org
+      \endverb
+    \endentry
+  \enddatalist
+\endrefsection
+\endinput
+
