@@ -3,9 +3,9 @@ functions {
     int N = rows(X);
     int P = cols(X);
     real lp = - N * P * log(2 * pi())
-      + N * log_determinant_spd(V)
-      + P * log_determinant_spd(U)
-      - trace_gen_quad_form(V, U, X - M);
+              + N * log_determinant_spd(V)
+              + P * log_determinant_spd(U)
+              - trace_gen_quad_form(V, U, X - M);
 
     return 0.5 * lp;
   }
@@ -24,7 +24,7 @@ data {
 
   // for Ab, Q
   matrix[M, M + 1] Mu_x[K];
-  cov_matrix[M + 1] Omega_x[K];  // given as precision = inverse cov
+  cov_matrix[M + 1] Omega_x[K];
   cov_matrix[M] Psi_x[K];
   real<lower=M - 1> nu_x[K];
 
@@ -36,19 +36,25 @@ data {
 }
 
 parameters {
-  simplex[K] pi[K];  // transition matrix to be soft-maxed
+  simplex[K] pi[K];
 
   // linear parameters for x
   matrix[M, M] A[K];
   vector[M] b[K];
-  cov_matrix[M] Q[K];  // precision = inverse cov
+  cov_matrix[M] Q[K];
 
   // linear parameters for y
   matrix[N, M] C;
   vector[N] d;
-  cov_matrix[N] S;  // precision = inverse cov
+  cov_matrix[N] S;
   
   vector[M] x[T];  // continuous hidden states
+}
+
+transformed parameters {
+  vector[K] log_pi_tr[K];
+  for (k in 1:K)
+    log_pi_tr[k] = log(to_vector(pi[, k]));
 }
 
 model {
@@ -63,13 +69,13 @@ model {
 
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t]) 
 
-  gamma[1] = rep_vector(multi_normal_lpdf(x[1] | mu, Sigma)
+  gamma[1] = rep_vector(multi_normal_prec_lpdf(x[1] | mu, Sigma)
                         + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S)
                         - log(K), K)
   
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] = log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
+      gamma[t, k] = log_sum_exp(gamma[t - 1] + log_pi_tr[k])
         + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
         + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
     }
@@ -79,23 +85,25 @@ model {
 }
 
 generated quantities {
-  array[T] int<lower=1, upper=K> z_star;
+  int<lower=1, upper=K> z_star[T];
   real log_p_z_star;
 
   {
-    array[T, K] int back_ptr;
+    int back_ptr[T, K];
     vector[K] eta[T];
 
     eta[1] = rep_vector(multi_normal_lpdf(x[1] | mu, Sigma)
                         + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S)
                         -log(K), K);
+
+    real tmp_logp;
+    real max_logp;
  
     for (t in 2:T) {
       for (k in 1:K) {
-        real tmp_logp;
-        real max_logp = negative_infinity();
+        max_logp = negative_infinity();
         for (j in 1:K) {
-          tmp_logp = eta[t - 1, j] + log(pi[j, k]);
+          tmp_logp = eta[t - 1, j] + log_pi_tr[k, j];
           if (tmp_logp > max_logp) {
             max_logp = tmp_logp;
             back_ptr[t, k] = j;
@@ -103,8 +111,8 @@ generated quantities {
         }
         
         eta[t, k] = max_logp
-                    + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
-                    + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
+          + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
+          + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
       }
     }
 

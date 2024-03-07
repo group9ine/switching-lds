@@ -3,9 +3,9 @@ functions {
     int N = rows(X);
     int P = cols(X);
     real lp = - N * P * log(2 * pi())
-      + N * log_determinant_spd(V)
-      + P * log_determinant_spd(U)
-      - trace_gen_quad_form(V, U, X - M);
+              + N * log_determinant_spd(V)
+              + P * log_determinant_spd(U)
+              - trace_gen_quad_form(V, U, X - M);
 
     return 0.5 * lp;
   }
@@ -19,18 +19,24 @@ data {
 
   // for Ab, Q
   matrix[N, N + 1] Mu[K];
-  cov_matrix[N + 1] Omega[K];  // given as precision = inverse cov
+  cov_matrix[N + 1] Omega[K];
   cov_matrix[N] Psi[K];
   real<lower=N - 1> nu[K];
 }
 
 parameters {
-  simplex[K] pi[K];  // transition matrix to be soft-maxed
+  simplex[K] pi[K];
 
   // linear parameters for y
   matrix[N, N] A[K];
   vector[N] b[K];
-  cov_matrix[N] Q[K];  // precision = inverse cov
+  cov_matrix[N] Q[K];
+}
+
+transformed parameters {
+  vector[K] log_pi_tr[K];
+  for (k in 1:K)
+    log_pi_tr[k] = log(to_vector(pi[, k]));
 }
 
 model {
@@ -46,8 +52,7 @@ model {
   
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] =
-        log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
+      gamma[t, k] = log_sum_exp(gamma[t - 1] + log_pi_tr[k])
         + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
@@ -56,21 +61,23 @@ model {
 }
 
 generated quantities {
-  array[T] int<lower=1, upper=K> z_star;
+  int<lower=1, upper=K> z_star[T];
   real log_p_z_star;
 
   {
-    array[T, K] int back_ptr;
+    int back_ptr[T, K];
     vector[K] eta[T];
 
     eta[1] = rep_vector(-log(K), K);
+
+    real tmp_logp;
+    real max_logp;
  
     for (t in 2:T) {
       for (k in 1:K) {
-        real tmp_logp;
-        real max_logp = negative_infinity();
+        max_logp = negative_infinity();
         for (j in 1:K) {
-          tmp_logp = eta[t - 1, j] + log(pi[j, k]);
+          tmp_logp = eta[t - 1, j] + log_pi_tr[k, j];
           if (tmp_logp > max_logp) {
             max_logp = tmp_logp;
             back_ptr[t, k] = j;
@@ -78,7 +85,7 @@ generated quantities {
         }
         
         eta[t, k] = max_logp
-                    + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
+          + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
       }
     }
 
@@ -96,4 +103,3 @@ generated quantities {
     }
   }
 }
-
