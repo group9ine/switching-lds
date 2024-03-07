@@ -1,4 +1,7 @@
-\documentclass[10pt, twocolumn, headings=small, footlines=1, DIV=calc]{scrartcl}
+\documentclass[
+  10pt, twocolumn, headings=normal,
+  footlines=1, DIV=calc
+]{scrartcl}
 \addtokomafont{disposition}{\normalfont\bfseries}
 \usepackage{preamble}
 \recalctypearea
@@ -66,6 +69,7 @@ low-probability states, and is commonly used in similar inference problems
 involving hidden Markov models or other state space models
 \autocite{Damiano2018}.
 
+\subsection{The forward algorithm}
 The basic idea behind the forward algorithm is to exploit a recursive
 relationship to build the full likelihood: indeed, consider the quantity
 \begin{equation}
@@ -84,7 +88,7 @@ repeatedly, we can write
           p(z_{t-1} = j, x_{1:t-1}, y_{1:t-1}),
       \end{multlined}
   \end{split}
-\label{eq:gamma-relation}
+  \label{eq:gamma-relation}
 \end{equation}
 where we have recognized the conditional probability $p(z_{t} = k \given z_{t-1}
 = j, x_{1:t-1}, y_{1:t-1}) = p(z_{t} = k \given z_{t-1} = j)$ as the element
@@ -121,6 +125,7 @@ $z_{t}$ and $z_{t-1}$. To initialize the recursion,
                   &= \lkl_{1}(y_{1}) \,
                     p(x_{1} \given z_{1} = k) \, p(z_{1} = k).
   \end{split}
+  \label{eq:gamma-1}
 \end{equation}
 The last two terms are the prior distributions on $x_{1}$ and $z_{1}$. We chose
 a multivariate Gaussian for the first and a uniform distribution over the $K$
@@ -141,6 +146,55 @@ the inverse Wisharts and $\nu_{x}, \nu_{y}$ their degrees of freedom. The
 returned random matrices with $M + 1$ columns are then split between the
 matrices $A_{k}$ and $C_{k}$ and their corresponding bias vectors $b_{k}$ and
 $d_{k}$.
+
+\subsection{Reconstructing the hidden states}
+Since we marginalize out the $z$ sequence during the sampling procedure, we need
+a way to recover them probabilistically. One way to do it is to search \emph{a
+posteriori} for the most likely hidden sequence of $z$ states conditioned to the
+observed $y_{1:T}$ and inferred $x_{1:T}$. This is done through the so-called
+\enquote{Viterbi algorithm} \autocite{Stan24}, which is based on a recursive
+relation much like the forward algorithm.
+
+Indeed, consider the quantity
+\begin{equation}
+  \eta_{t}(k) \coloneq \argmax_{z_{1:t-1}}
+    p(z_{1:t-1}, z_{t} = k, x_{1:t}, y_{1:t}).
+\end{equation}
+If we proceed similarly to~\eqref{eq:gamma-relation}, and using also the fact
+that
+\begin{equation}
+  \max_{a,b} [f(a) g(a, b)] = \max_{a}[f(a) \max_{b} g(a, b)],
+\end{equation}
+we can expand the definition as
+\begin{multline}
+  \eta_{t}(k) = \argmax_{j \in \{1, \ldots, K\}}
+    [\, p(y_{t} \given z_{t} = k, x_{t}) \,
+    p(x_{t} \given z_{t} = k, x_{t-1}) \\
+    \cdot \pi_{jk} \argmax_{z_{1:t-2}}
+    p(z_{1:t-2}, z_{t-1} = j, x_{1:t-1}, y_{1:t-1})].
+\end{multline}
+We then recognize the last factor as $\eta$ at the previous time step $t-1$,
+giving us the recursive relation
+\begin{equation}
+  \eta_{t}(k) = \lkl_{k}(y_{t}) \lkl_{k}(x_{t})
+  \argmax_{j \in \{1, \ldots, K\}} [ \pi_{jk} \, \eta_{t-1}(j)].
+\end{equation}
+
+Regarding the initial value, there is no $z_{t-1}$ to maximize over, so
+\begin{equation}
+  \eta_{1}(k) = p(z_{1} = k, x_{1}, y_{1}),
+\end{equation}
+which is the same initialization of $\gamma_{1}(k)$ as shown in the previous
+section, Eq.~\eqref{eq:gamma-1}. Once we have the value of $\eta$ at time $T$ we
+can maximize over $z_{T}$ and recover the maximum-probability sequence
+$\hat{z}_{1:T}$:
+\begin{equation}
+  \hat{z}_{1:T} = 
+  \argmax_{z_{1:T}} p(z_{1:T}, x_{1:T}, y_{1:T}) =
+  \argmax_{k \in \{1, \ldots, K\}} \eta_{T}(k).
+\end{equation}
+The procedure is thus substantially the same as the forward algorithm, but with
+maximization replacing summation.
 
 \printbibliography
 \end{document}
