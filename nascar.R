@@ -8,11 +8,12 @@ nascar_full <- fread("data/nascar/dataset.csv", sep = ",")
 names(nascar_full) <- c("x", "y")
 
 # take a subset
-nascar <- nascar_full[seq(1, 1.5e4, 50)]
+nascar <- nascar_full[seq(1, 2e4, 50)]
 nrow(nascar)
 
-plot(nascar$x, nascar$y, type = "b")
-points(nascar$x[1], nascar$y[1], col = "firebrick", pch = 19, size = 3)
+plot(nascar$x, nascar$y, type = "b"); points(
+  nascar$x[1], nascar$y[1], col = "firebrick", pch = 19
+)
 plot(nascar$x, type = "l")
 
 dt <- mean(sqrt(diff(nascar$x)^2 + diff(nascar$y)^2))
@@ -37,5 +38,29 @@ fit <- sampling(
     Psi = rep(list(diag(1 / 3, 2)), 4),
     nu = rep(3, 4)
   ),
-  chains = 2, iter = 2000
+  chains = 1, iter = 4000, warmup = 1000,
+  control = list(adapt_delta = 0.9)
 )
+
+params <- as.data.frame(extract(fit, permuted = FALSE))
+setDT(params)
+params[, grep("chain:[^1]|z_star|log_|lp", names(params)) := NULL]
+names(params) <- gsub("chain:1.", "", names(params), fixed = TRUE)
+
+runmean <- sapply(seq_len(nrow(params)), \(n) mean(log(params$`pi[2,1]`[1:n])))
+plot(runmean, type = "l")
+
+divergent <- get_sampler_params(fit, inc_warmup = FALSE)[[1]][, "divergent__"]
+sum(divergent) / length(divergent)
+
+params$divergent <- divergent
+
+plot_par <- function(pars) {
+  p <- melt(params[, ..pars], measure.vars = pars) |>
+    ggplot(aes(value)) +
+      geom_histogram(boundary = 0, bins = 50) +
+  if (length(pars) > 1)
+    p <- p + facet_grid(vars(variable), nrow = length(pars))
+
+  return(p)
+}
