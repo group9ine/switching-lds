@@ -44,7 +44,7 @@ fit <- sampling(
 
 params <- as.data.frame(extract(fit, permuted = FALSE))
 setDT(params)
-params[, grep("chain:[^1]|z_star|log_|lp", names(params)) := NULL]
+params[, grep("chain:[^1]|log_|lp", names(params)) := NULL]
 names(params) <- gsub("chain:1.", "", names(params), fixed = TRUE)
 
 runmean <- sapply(seq_len(nrow(params)), \(n) mean(log(params$`pi[2,1]`[1:n])))
@@ -58,9 +58,17 @@ params$divergent <- divergent
 plot_par <- function(pars) {
   p <- melt(params[, ..pars], measure.vars = pars) |>
     ggplot(aes(value)) +
-      geom_histogram(boundary = 0, bins = 50) +
+      geom_histogram(boundary = 0, bins = 50)
   if (length(pars) > 1)
-    p <- p + facet_grid(vars(variable), nrow = length(pars))
+    p <- p + facet_wrap(vars(variable), nrow = length(pars))
 
   return(p)
 }
+
+par_name <- \(pattern) names(params)[grep(pattern, names(params))]
+
+par_name("pi.4") |> plot_par()
+par_name("A.4") |> plot_par()
+par_name("b.4") |> plot_par()
+
+params[, par_name("z_"), with = FALSE] |> colSums()
