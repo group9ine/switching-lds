@@ -11,6 +11,7 @@ names(nascar_full) <- c("x", "y")
 nascar <- nascar_full[seq(1, 1e4, 100)]
 
 plot(nascar$x, nascar$y, type = "b")
+points(nascar[1, "x"], nascar[1, "y"], col = "red")
 
 # simpler data (triangle wave)
 period <- 15
@@ -34,8 +35,8 @@ sampling_rate <- 100  # Sampling rate in Hz
 square_wave <- generate_square_wave(frequency, duration, sampling_rate)
 square_wave <- square_wave + rnorm(length(square_wave),0,0.05)
 
-plot(seq(0, duration, by = 1/sampling_rate), square_wave, type = 'l',
-     main = 'Square Wave', xlab = 'Time (s)', ylab = 'Amplitude')
+plot(seq(0, duration, by = 1 / sampling_rate), square_wave, type = "l",
+     main = "Square Wave", xlab = "Time (s)", ylab = "Amplitude")
 length(square_wave)
 
 # one layer model
