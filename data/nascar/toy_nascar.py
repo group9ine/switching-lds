@@ -24,7 +24,7 @@ def stupid_model(T):
 def basic_model(T):
     x = [[-1, -1]]
     v = [1, 0]
-    dt = 0.005
+    dt = 0.002
     for t in range(T):
         x.append([x[-1][0] + v[0] * dt, x[-1][1] + v[1] * dt])
         if abs(x[-1][0]) < 1:
@@ -205,7 +205,8 @@ if __name__ == "__main__":
 
     T = 100000
     # data_a = accelerating_model(T)
-    data_a = advanced_model(T)
+    # data_a = advanced_model(T)
+    data_a = basic_model(T)
     # data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
 
     with open("dataset.csv", "w") as f:
