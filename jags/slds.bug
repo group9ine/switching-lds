@@ -31,4 +31,12 @@ model {
         x[t,1:D] ~ dmnorm(Ab[z[t],1:D,] %*% x[t-1,1:D] + Ab[z[t],D+1,], Q[z[t],,]) 
         ## multivariate defined in terms of covariance matrix
     }
+    
+    # final prediction for trajectory continuation
+    predz[1] ~ dcat(pi[z[T],])
+    predx[1,1:D] ~ dmnorm(Ab[predz[1],1:D,] %*% x[T,1:D] + Ab[predz[1],D+1,], Q[predz[1],,]) 
+    for (t in 2:T) {
+        predz[t] ~ dcat(pi[predz[t-1],])
+        predx[t,1:D] ~ dmnorm(Ab[predz[t],1:D,] %*% predx[t-1,1:D] + Ab[predz[t],D+1,], Q[predz[t],,]) 
+    }
 }

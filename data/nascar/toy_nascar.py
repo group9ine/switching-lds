@@ -24,16 +24,17 @@ def stupid_model(T):
 def basic_model(T):
     x = [[-1, -1]]
     v = [1, 0]
-    dt = 0.002
+    dt = 0.001
+
     for t in range(T):
         x.append([x[-1][0] + v[0] * dt, x[-1][1] + v[1] * dt])
         if abs(x[-1][0]) < 1:
             continue
-        elif x[-1][0] > 1:
-            v[0] += -(x[-1][0] - 1) * dt
+        elif x[-1][0] > 4:
+            v[0] += -(x[-1][0] - 4) * dt
             v[1] += -x[-1][1] * dt
-        elif x[-1][0] < -1:
-            v[0] += -(x[-1][0] + 1) * dt
+        elif x[-1][0] < -4:
+            v[0] += -(x[-1][0] + 4) * dt
             v[1] += -x[-1][1] * dt
 
     x = np.array(x)
@@ -208,7 +209,7 @@ if __name__ == "__main__":
     # data_a = advanced_model(T)
     data_a = basic_model(T)
     # data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
-
+    
     with open("dataset.csv", "w") as f:
         for i in data_a:
             f.write(", ".join([str(j) for j in i]) + "\n")
@@ -224,11 +225,11 @@ if __name__ == "__main__":
     y = np.linspace(min(data_a[:, 1]) - 0.1, max(data_a[:, 1]) + 0.1, 500)
 
     x, y = np.meshgrid(x, y)
-    circ = [
-        [circuit_one((x[i][j], y[i][j])) for j in range(len(x[0]))]
-        for i in range(len(x))
-    ]
-    # circ = [[circuit_two((x[i][j],y[i][j])) for j in range(len(x[0]))] for i in range(len(x))]
+    #circ = [
+        #[circuit_one((x[i][j], y[i][j])) for j in range(len(x[0]))]
+        #for i in range(len(x))
+    #]
+    circ = [[circuit_two((x[i][j],y[i][j])) for j in range(len(x[0]))] for i in range(len(x))]
     plt.scatter(x, y, c=circ, marker=".")
     plt.plot(data_a[:, 0], data_a[:, 1])
     plt.gca().set_aspect("equal")
