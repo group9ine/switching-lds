@@ -9,6 +9,15 @@ functions {
 
     return 0.5 * lp;
   }
+
+  vector logp_stick_break(vector nu) {
+    vector[K] p;
+    p[1] = log_inv_logit(nu[1]); 
+    for (k in 2:(K - 1))
+      p[k] = log_inv_logit(nu[k]) + sum(log1m_inv_logit(nu[1:(k - 1)]));
+    p[K] = sum(log1m_inv_logit(nu));
+
+    return p;
 }
 
 data {
@@ -33,12 +42,6 @@ parameters {
   cov_matrix[N] Q[K];
 }
 
-transformed parameters {
-  vector[K] log_pi_tr[K];
-  for (k in 1:K)
-    log_pi_tr[k] = log(to_vector(pi[, k]));
-}
-
 model {
   // assigning priors to linear parameters
   for (k in 1:K) {
@@ -52,7 +55,8 @@ model {
   
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] = log_sum_exp(gamma[t - 1] + log_pi_tr[k])
+      gamma[t, k] =
+        log_sum_exp(gamma[t - 1] + logp_stick_break(R[k] * y[t - 1] + r[k]))
         + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
@@ -71,15 +75,15 @@ generated quantities {
     eta[1] = rep_vector(-log(K), K);
 
     real tmp_logp;
-    real max_logp;
+    vector[K] logp;
  
     for (t in 2:T) {
       for (k in 1:K) {
         max_logp = negative_infinity();
+        logp = eta[t - 1] + logp_stick_break(R[k] * y[t - 1] + r[k]);
         for (j in 1:K) {
-          tmp_logp = eta[t - 1, j] + log_pi_tr[k, j];
-          if (tmp_logp > max_logp) {
-            max_logp = tmp_logp;
+          if (logp[j] > max_logp) {
+            max_logp = logp[j];
             back_ptr[t, k] = j;
           }
         }
