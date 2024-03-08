@@ -110,8 +110,8 @@ else than $\gamma_{t-1}(j)$, giving us the recursive relation we needed:
 \end{equation}
 
 Indeed, to retrieve the full joint likelihood of the sequences $x_{1:T}$ and
-$y_{1:T}$ we only need to marginalize the $\gamma$ at the last time step $T$
-over the discrete states $k = 1, 2, \ldots, K$:
+$y_{1:T}$ we only need to marginalize $\gamma$ at the last time step $T$ over
+the discrete states $k = 1, 2, \ldots, K$:
 \begin{equation}
   p(x_{1:T}, y_{1:T}) = \sum_{k=1}^{K} p(z_{T} = k, x_{1:T}, y_{1:T})
     = \sum_{k=1}^{K} \gamma_{T} (k).
