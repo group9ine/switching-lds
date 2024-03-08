@@ -31,6 +31,11 @@ data {
   cov_matrix[N + 1] Omega[K];
   cov_matrix[N] Psi[K];
   real<lower=N - 1> nu[K];
+
+  // for R, r
+  matrix[K - 1, N + 1] Mu_r[K];
+  cov_matrix[K - 1] Sigma_r[K];
+  cov_matrix[N + 1] Omega_r[K];
 }
 
 parameters {
@@ -40,6 +45,10 @@ parameters {
   matrix[N, N] A[K];
   vector[N] b[K];
   cov_matrix[N] Q[K];
+
+  // linear parameters for nu
+  matrix[K - 1, N] R[K];
+  vector[K - 1] r[K];
 }
 
 model {
@@ -47,6 +56,7 @@ model {
   for (k in 1:K) {
     Q[k] ~ wishart(nu[k], Psi[k]);
     append_col(A[k], b[k]) ~ matrix_normal_prec(Mu[k], Q[k], Omega[k]);
+    append_col(R[k], r[k]) ~ matrix_normal_prec(Mu_r[k], Sigma_r[k], Omega_r[k]);
   }
 
   vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, y[1:t]) 
