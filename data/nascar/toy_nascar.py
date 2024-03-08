@@ -220,7 +220,7 @@ if __name__ == "__main__":
     ax.plot(data_a[:, 1])
 
     plt.show()
-
+    """
     x = np.linspace(min(data_a[:, 0]) - 0.1, max(data_a[:, 0]) + 0.1, 500)
     y = np.linspace(min(data_a[:, 1]) - 0.1, max(data_a[:, 1]) + 0.1, 500)
 
@@ -234,3 +234,4 @@ if __name__ == "__main__":
     plt.plot(data_a[:, 0], data_a[:, 1])
     plt.gca().set_aspect("equal")
     plt.show()
+    """
