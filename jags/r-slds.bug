@@ -33,6 +33,10 @@ model {
     
     # update rules
     for (t in 2:T) { 
+        ##################### pseudo
+        nu <- R %*% x + c 
+        pisb =  plogis(nu)
+        #####################
         z[t] ~ dcat(pi[z[t-1],])
         x[t,1:D] ~ dmnorm(Ab[z[t],1:D,] %*% x[t-1,1:D] + Ab[z[t],D+1,], Q[z[t],,]) 
         ## multivariate defined in terms of covariance matrix
