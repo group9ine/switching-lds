@@ -1,23 +1,36 @@
 library(rjags)
 library(ggplot2)
 
-data = read.csv("data/nascar/dataset.csv")
-#names(data) = c("x","y")
+#data = read.csv("data/nascar/dataset.csv")
+data = read.csv("data/dataset.csv")
+names(data) = c("x","y")
 
-#plot(data$x, data$y, type="l")
+
+truez = c(1, sign(diff(atan2(data[,2],data[,1]))))
+truez[truez==-1]=2
+
+scale = (sum(diff(as.matrix(data))**2)/(nrow(data)-1))**0.5
 D=2
-K=5
+K=2
 
 mod_data=NULL
-mod_data$x=data[seq(1,nrow(data)/2,5),]
+mod_data$x=data[seq(1,nrow(data)/10,1),]*10/scale
+# mod_data$x=data*10/scale
 mod_data$T=nrow(mod_data$x)
 mod_data$K=K
 mod_data$D=D
+# mod_data$z=truez
+#mod_data$bscale=bscale
 #mod_data$x0=mod_data$x[1,]
+
+
 
 T=mod_data$T
 niter=10
 
+
+
+plot(ggplot(data) +geom_point(aes(x, y, col=as.factor(truez)))) #see what the data is
 
 mod <- jags.model("jags/slds.bug", mod_data)
 
@@ -46,7 +59,9 @@ for (i in 1:niter) {
 }
 
 
+print(coda.samples(mod, c("Ab", "Q", "pi"), n.iter=1))
 
 for (i in 1:niter) {
  plot(ggplot() + geom_point(aes(results.list[[i]]$x1, results.list[[i]]$x2, col=results.list[[i]]$z))+geom_path(aes(results.list[[i]]$x1, results.list[[i]]$x2)))
 }
+print("Done")

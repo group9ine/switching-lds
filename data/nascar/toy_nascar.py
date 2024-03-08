@@ -201,6 +201,25 @@ def circuit_two(pos):
     return True
 
 
+def just_a_square(T):
+    s=1
+    x=[[-1,-1]]
+    for t in range(T-1):
+        if s==1:
+            x.append([x[-1][0]+0.1, x[-1][1]])
+        elif s==2:
+            x.append([x[-1][0], x[-1][1]+0.1])
+        elif s==3:
+            x.append([x[-1][0]-0.1, x[-1][1]])
+        elif s==0:
+            x.append([x[-1][0], x[-1][1]-0.1])
+        
+        if (t+1)%20==0:
+            s=(s+1)%4
+    x=np.array(x)
+    x += np.random.normal(0, 0.001, size=(len(x), 2))
+    return x
+
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
 
@@ -208,6 +227,7 @@ if __name__ == "__main__":
     # data_a = accelerating_model(T)
     # data_a = advanced_model(T)
     data_a = basic_model(T)
+    # data_a = just_a_square(1000)
     # data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
     
     with open("dataset.csv", "w") as f:
