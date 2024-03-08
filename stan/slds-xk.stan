@@ -96,16 +96,17 @@ generated quantities {
     for (k in 1:K)
       eta[1, k] += multi_normal_prec_lpdf(y[1] | C[k] * x[1] + d[k], S[k]);
 
-    real tmp_logp;
     real max_logp;
+    vector[K] logp;
  
     for (t in 2:T) {
       for (k in 1:K) {
         max_logp = negative_infinity();
+        logp = eta[t - 1] + log_pi_tr[k];
+
         for (j in 1:K) {
-          tmp_logp = eta[t - 1, j] + log_pi_tr[k, j];
-          if (tmp_logp > max_logp) {
-            max_logp = tmp_logp;
+          if (logp[j] > max_logp) {
+            max_logp = logp[j];
             back_ptr[t, k] = j;
           }
         }
