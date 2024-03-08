@@ -25,18 +25,13 @@ data {
 }
 
 parameters {
+  // transition matrix
   simplex[K] pi[K];
 
   // linear parameters for y
   matrix[N, N] A[K];
   vector[N] b[K];
   cov_matrix[N] Q[K];
-}
-
-transformed parameters {
-  vector[K] log_pi_tr[K];
-  for (k in 1:K)
-    log_pi_tr[k] = log(to_vector(pi[, k]));
 }
 
 model {
@@ -52,7 +47,7 @@ model {
   
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] = log_sum_exp(gamma[t - 1] + log_pi_tr[k])
+      gamma[t, k] = log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
         + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
@@ -76,7 +71,7 @@ generated quantities {
     for (t in 2:T) {
       for (k in 1:K) {
         max_logp = negative_infinity();
-        logp = eta[t - 1] + log_pi_tr[k];
+        logp = eta[t - 1] + log(to_vector(pi[, k]));
 
         for (j in 1:K) {
           if (logp[j] > max_logp) {

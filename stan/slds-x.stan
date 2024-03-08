@@ -36,6 +36,7 @@ data {
 }
 
 parameters {
+  // transition matrix
   simplex[K] pi[K];
 
   // linear parameters for x
@@ -48,13 +49,8 @@ parameters {
   vector[N] d;
   cov_matrix[N] S;
   
-  vector[M] x[T];  // continuous hidden states
-}
-
-transformed parameters {
-  vector[K] log_pi_tr[K];
-  for (k in 1:K)
-    log_pi_tr[k] = log(to_vector(pi[, k]));
+  // continuous hidden states
+  vector[M] x[T];
 }
 
 model {
@@ -75,7 +71,7 @@ model {
   
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] = log_sum_exp(gamma[t - 1] + log_pi_tr[k])
+      gamma[t, k] = log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
         + multi_normal_prec_lpdf(x[t] | A[k] * x[t - 1] + b[k], Q[k])
         + multi_normal_prec_lpdf(y[t] | C * x[t] + d, S);
     }
@@ -102,7 +98,7 @@ generated quantities {
     for (t in 2:T) {
       for (k in 1:K) {
         max_logp = negative_infinity();
-        logp = eta[t - 1] + log_pi_tr[k];
+        logp = eta[t - 1] + log(to_vector(pi[, k]));
 
         for (j in 1:K) {
           if (logp[j] > max_logp) {
