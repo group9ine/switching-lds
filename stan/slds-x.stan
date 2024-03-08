@@ -71,7 +71,7 @@ model {
 
   gamma[1] = rep_vector(multi_normal_prec_lpdf(x[1] | mu, Sigma)
                         + multi_normal_prec_lpdf(y[1] | C * x[1] + d, S)
-                        - log(K), K)
+                        - log(K), K);
   
   for (t in 2:T) {
     for (k in 1:K) {

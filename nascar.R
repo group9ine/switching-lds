@@ -35,7 +35,10 @@ for (i in seq_along(z)){
 }
 x[[1]] <- NULL
 
-x <- lapply(x, \(x) x*10)
+#rescaling
+scaling_factor <- mean( diff(data$x)**2 + diff(data$y)**2 |> sqrt() )
+x <- lapply(x, \(x) x/scaling_factor)
+
 data <- as.data.table(transpose(x)) 
 setnames(data, c('x', 'y'))
 plot(data$x, data$y, type = 'l')
