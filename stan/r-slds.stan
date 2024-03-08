@@ -11,6 +11,7 @@ functions {
   }
 
   vector logp_stick_break(vector nu) {
+    int K = size(nu);
     vector[K] p;
     p[1] = log_inv_logit(nu[1]); 
     for (k in 2:(K - 1))
@@ -18,6 +19,7 @@ functions {
     p[K] = sum(log1m_inv_logit(nu));
 
     return p;
+  }
 }
 
 data {
@@ -84,7 +86,7 @@ generated quantities {
 
     eta[1] = rep_vector(-log(K), K);
 
-    real tmp_logp;
+    real max_logp;
     vector[K] logp;
  
     for (t in 2:T) {
