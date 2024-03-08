@@ -11,12 +11,12 @@ functions {
   }
 
   vector logp_stick_break(vector nu) {
-    int K = size(nu);
+    int K = size(nu) + 1;
+    vector[K - 1] denoms = log1p_exp(nu);
     vector[K] p;
-    p[1] = log_inv_logit(nu[1]); 
-    for (k in 2:(K - 1))
-      p[k] = log_inv_logit(nu[k]) + sum(log1m_inv_logit(nu[1:(k - 1)]));
-    p[K] = sum(log1m_inv_logit(nu));
+    for (k in 1:(K - 1))
+      p[k] = nu[k] - sum(denoms[1:k]);
+    p[K] = -sum(denoms);
 
     return p;
   }
@@ -41,8 +41,6 @@ data {
 }
 
 parameters {
-  simplex[K] pi[K];
-
   // linear parameters for y
   matrix[N, N] A[K];
   vector[N] b[K];
