@@ -25,10 +25,10 @@
 ]{siunitx}
 \usepackage[en-GB]{datetime2}
 \usepackage[largesc, nott, nohelv]{newtxtext}
-\usepackage[scaled=0.96]{newtxtt}
+\usepackage[scaled=0.97]{newtxtt}
 \usepackage[scale=0.89]{tgheros}
-\usepackage[vvarbb]{newtxmath}
-\usepackage[cal=stixtwoplain, bb=esstix]{mathalfa}
+\usepackage[vvarbb, smallerops]{newtxmath}
+\usepackage[cal=stixtwoplain, bb=esstix]{mathalpha}
 \usepackage{bm}
 \usepackage{listings}
 \lstset{
@@ -45,7 +45,7 @@
 
 % bibliography
 \usepackage[english=british]{csquotes}
-\usepackage[backend=biber]{biblatex}
+\usepackage[backend=biber, url=false]{biblatex}
 \addbibresource{refs.bib}
 
 % macros
@@ -53,7 +53,7 @@
 %% new commands
 \newcommand{\abbr}[1]{\textsc{#1}}
 \newcommand{\figref}[1]{Fig.~\ref{#1}}
-\newcommand{\given}[1][]{\;#1\vert\;}
+\newcommand{\given}[1][]{\:#1\vert\:}
 \newcommand{\lkl}{\mathcal{L}}
 \newcommand{\nrm}{\mathcal{N}}
 \DeclareMathOperator{\MNIW}{MNIW}

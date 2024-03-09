@@ -62,7 +62,7 @@ sampler} or \abbr{nuts} \autocite{Carpenter17}.
 
 The model cannot be implemented directly as it is, in the sense of specifying a
 categorical likelihood for the transition $z_{t} \to z_{t+1}$ and Gaussian
-likelihoods for $x_{t} \given x_{t-1}$ and $y_{t} \given x_{t}$, because Stan
+likelihoods for $x_{t} \given x_{t-1}$ and $y_{t} \given x_{t}$, be\-cause Stan
 does not allow the definition of integer parameters: so, one should marginalize
 over the hidden discrete states. Besides Stan’s limitations in this regard, the
 resulting strategy -- known in the literature as \emph{forward algorithm} -- is
