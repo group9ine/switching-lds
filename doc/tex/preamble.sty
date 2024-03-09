@@ -4,7 +4,7 @@
 
 % maths
 \usepackage{mathtools}
-\usepackage{amssymb}
+%\usepackage{amssymb}
 \usepackage{mleftright}
 \mleftright
 
@@ -24,10 +24,11 @@
   detect-all
 ]{siunitx}
 \usepackage[en-GB]{datetime2}
-\usepackage{eucal}
-%\usepackage{libertine}
-%\usepackage[libertine, vvarbb]{newtxmath}
-%\usepackage[scale=0.95]{inconsolata}
+\usepackage[largesc, nott, nohelv]{newtxtext}
+\usepackage[scaled=0.96]{newtxtt}
+\usepackage[scale=0.89]{tgheros}
+\usepackage[vvarbb]{newtxmath}
+\usepackage[cal=stixtwoplain, bb=esstix]{mathalfa}
 \usepackage{bm}
 \usepackage{listings}
 \lstset{
@@ -50,6 +51,7 @@
 % macros
 \usepackage{xparse}
 %% new commands
+\newcommand{\abbr}[1]{\textsc{#1}}
 \newcommand{\figref}[1]{Fig.~\ref{#1}}
 \newcommand{\given}[1][]{\;#1\vert\;}
 \newcommand{\lkl}{\mathcal{L}}

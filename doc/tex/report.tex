@@ -3,6 +3,7 @@
   footlines=1, DIV=calc
 ]{scrartcl}
 \addtokomafont{disposition}{\normalfont\bfseries}
+\addtokomafont{title}{\normalfont}
 \usepackage{preamble}
 \recalctypearea
 
@@ -17,6 +18,7 @@
 A switching linear dynamical system -- also known as \emph{switching state space
 model} -- is defined, borrowing the notation from \textcite{Linderman17}, by the
 set of discrete-time stochastic equations
+\vspace{-5pt}
 \begin{align}
   x_{t} &= A_{z_{t}} x_{t - 1} + b_{z_{t}} + v_{t}, \\
   y_{t} &= C_{z_{t}} x_{t} + d_{z_{t}} + w_{t},
@@ -51,12 +53,12 @@ distribution of the parameter set
 where $x_{1:T}$ denotes the whole sequence $x_{1}, x_{2}, \ldots, x_{T}$, and
 $\pi_{k}$ the \emph{k}th row of the transition matrix.
 
-\section{Implementation in Stan}
+\section{Model implementation}
 To set up a Monte Carlo sampling scheme, we chose to work with the Stan
 \autocite{Stan24} programming language and its implementation in R through the
-package \texttt{rstan} \autocite{RStan24}. Sampling in Stan is done by default
+package \textsf{rstan} \autocite{RStan24}. Sampling in Stan is done by default
 using a variant of the Hamiltonian Monte Carlo scheme called \enquote{No-U-Turn
-sampler} or \textsc{nuts} \autocite{Carpenter17}.
+sampler} or \abbr{nuts} \autocite{Carpenter17}.
 
 The model cannot be implemented directly as it is, in the sense of specifying a
 categorical likelihood for the transition $z_{t} \to z_{t+1}$ and Gaussian
@@ -139,8 +141,8 @@ matrix-normal-inverse-Wishart priors:
   (C_{k}, d_{k}), S_{k} &\sim \MNIW(M_{y}, \Omega_{y}, \Psi_{y}, \nu_{y}).
 \end{align}
 Here $M_{x} \in \R^{M \times (M + 1)}$ and $M_{y} \in \R^{N \times (M + 1)}$ are
-the mean matrices of the matrix normals, $\Omega_x, \Omega_y \in \R^{(M + 1)
-\times (M + 1)}$ their between-column covariance matrices, while $\Psi_x \in
+the mean ma\-tri\-ces of the matrix normals, $\Omega_x, \Omega_y \in \R^{(M + 1)
+\times (M + 1)}$ their be\-tween-column covariance matrices, while $\Psi_x \in
 \R^{M \times M}$ and $\Psi_{y} \in \R^{N \times N}$ are the scale matrices of
 the inverse Wisharts and $\nu_{x}, \nu_{y}$ their degrees of freedom. The
 returned random matrices with $M + 1$ columns are then split between the
@@ -180,7 +182,7 @@ giving us the recursive relation
   \argmax_{j \in \{1, \ldots, K\}} [ \pi_{jk} \, \eta_{t-1}(j)].
 \end{equation}
 
-Regarding the initial value, there is no $z_{t-1}$ to maximize over, so
+Regarding the initial value, there is no $z_{t-1}$ to maximize over, so we get
 \begin{equation}
   \eta_{1}(k) = p(z_{1} = k, x_{1}, y_{1}),
 \end{equation}
