@@ -1,95 +1,94 @@
 library(data.table)
 library(ggplot2)
-library(rstan)
-options(mc.cores = parallel::detectCores() - 2)
-rstan_options(auto_write = TRUE)
+library(cmdstanr)
+options(mc.cores = 2)
 
+# read nascar dataset and take a subset
 nascar_full <- fread("data/nascar/dataset.csv", sep = ",")
 names(nascar_full) <- c("x", "y")
-
-# take a subset
-nascar <- nascar_full[seq(1, 4e4 + 5e3, 200)]
+nascar <- nascar_full[seq(1, 4e4 + 5e3, 150)]
 nrow(nascar)
 
-plot(nascar$x, nascar$y, type = "b")
-points(
-  nascar$x[1], nascar$y[1],
-  col = "firebrick", pch = 19
-)
-plot(nascar$x, type = "l")
+# rescale to avoid numerical issues
+nascar_scl <- nascar / mean(sqrt(diff(nascar$x)^2 + diff(nascar$y)^2))
+max(nascar); min(nascar)
+max(nascar_scl); min(nascar_scl)
 
-z <- sample(1:2, size = 300, replace = TRUE, prob = c(0.7, 0.3))
-theta <- pi / 12
-A <- function(z) {
-  if (z == 1) {
-    matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), ncol = 2)
-  } else {
-    matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)), ncol = 2)
-  }
-}
+ggplot(nascar_scl, aes(x, y)) +
+  geom_path(colour = "steelblue") +
+  geom_point(data = \(x) x[1, ], colour = "firebrick")
 
-x <- rep(list(matrix(c(0, 0), ncol = 1)), length(z))
-x[[1]] <- matrix(c(1, 1), ncol = 1)
-for (i in seq_along(z)) {
-  x[[i + 1]] <- A(z[i]) %*% x[[i]] + rnorm(1, 0, 0.001)
-}
-x[[1]] <- NULL
+# compile the base rSLDS model
+mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
+mod$check_syntax(pedantic = TRUE)
+mod$compile(cpp_options = list(
+  stan_cpp_optims = TRUE,
+  stan_no_range_checks = TRUE
+))
 
-data <- as.data.table(transpose(x))
-setnames(data, c("x", "y"))
+# 2D rotation matrix generating function
+rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
+# estimate rotation angle
+theta <- 1 / 50
 
-# rescaling
-data <- data / mean(sqrt(diff(data$x)^2 + diff(data$y)^2))
-plot(data$x, data$y, type = "l")
-
-sm <- stan_model(
-  file = "stan/slds.stan",
-  model_name = "SLDS",
-  allow_optimizations = TRUE
-)
-
-fit <- sampling(
-  sm, data = list(
-    K = 2, N = 2, T = nrow(data),
-    y = as.matrix(data),
-    Mu = list(cbind(A(1), c(0, 0)), cbind(A(2), c(0, 0))),
-    Omega = rep(list(diag(1, 3)), 2),
-    Psi = rep(list(diag(0.5, 2)), 2),
-    nu = rep(2, 2)
+# set up data and priors
+data_list <- list(
+  K = 4,  # number of hidden states
+  N = 2,  # dimension of observed data
+  T = nrow(nascar_scl),
+  y = as.matrix(nascar_scl),
+  # MNW parameters for A, b, Q prior
+  Mu = list(
+    cbind(diag(1, 2), c(1, 0)),  # first straight
+    cbind(rot(theta), c(0, 0)),  # first curve
+    cbind(diag(1, 2), c(-1, 0)), # second straight
+    cbind(rot(theta), c(0, 0))   # second curve
   ),
-  chains = 2, iter = 3000, warmup = 1000
+  Omega = rep(list(diag(1, 3)), 4),  # diagonal precision matrix
+  # The exp. value of the Wishart distribution is nu * Psi,
+  # so we're setting E[Q] = diag(1, 2) with these values.
+  # A lower nu gives a more homogenous distribution
+  Psi = rep(list(diag(0.5, 2)), 4),
+  nu = rep(2, 4),
+  # MN parameters for R, r prior
+  # without better intuition, pick something uniform
+  Mu_r = rep(list(matrix(1, nrow = 3, ncol = 3)), 4),
+  Sigma_r = rep(list(diag(1, 3)), 4),
+  Omega_r = rep(list(diag(1, 3)), 4)
 )
 
-params <- as.data.frame(extract(fit, permuted = FALSE))
-setDT(params)
-params[, grep("chain:[^1]|log_|lp", names(params)) := NULL]
-names(params) <- gsub("chain:1.", "", names(params), fixed = TRUE)
+fit <- mod$sample(
+  data = data_list,
+  output_dir = "out",
+  chains = 2,
+  iter_warmup = 1000,
+  iter_sampling = 2000,
+  show_exceptions = FALSE
+)
 
-runmean <- sapply(seq_len(nrow(params)), \(n) mean(log(params$`pi[2,1]`[1:n])))
-plot(runmean, type = "l")
+# save results to file
+fit$save_object(file = "out/fit.rds")
 
-divergent <- get_sampler_params(fit, inc_warmup = FALSE)[[1]][, "divergent__"]
-sum(divergent) / length(divergent)
+# check divergences and other problems
+fit$diagnostic_summary()
+dgn <- fit$sampler_diagnostics(format = "df") |> as.data.table()
+names(dgn) <- gsub("__|[.]", "", names(dgn))
+for (col in c("divergent", "chain"))
+  set(dgn, j = col, value = factor(dgn[[col]]))
 
-plot_par <- function(pars) {
-  p <- melt(params[, ..pars], measure.vars = pars) |>
-    ggplot(aes(value)) +
-      geom_histogram(boundary = 0, bins = 50)
-  if (length(pars) > 1) {
-    p <- p + facet_wrap(vars(variable), nrow = length(pars))
-  }
+ggplot(dgn, aes(iteration, accept_stat, colour = divergent)) +
+  geom_point() +
+  facet_wrap(vars(chain), nrow = 2)
 
-  return(p)
-}
+# take a look at draws
+draws <- fit$draws(format = "df") |> as.data.table()
+names(draws) <- gsub("__|[.]", "", names(draws))
 
-par_name <- \(pattern) names(params)[grep(pattern, names(params))]
+par_name <- \(rgx) names(draws)[grep(rgx, names(draws))]
+par_name("A.4") |>
+  fit$draws() |>
+  bayesplot::mcmc_hist_by_chain()
 
-par_name("pi.1") |> plot_par()
-par_name("A.1") |> plot_par()
-par_name("b.1") |> plot_par()
-
-z_star <- params[, lapply(.SD, mean), .SDcols = par_name("z_")] |>
-  unlist(recursive = FALSE, use.names = FALSE) |>
-  as.integer()
-
-all(z_star == z)
+par_name("b.1") |>
+  fit$draws() |>
+  bayesplot::mcmc_hist_by_chain()
