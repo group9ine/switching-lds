@@ -16,41 +16,41 @@ data {
   int<lower=1> M;  // dimension of the continuous hidden states
   int<lower=1> N;  // number of observed features
   int<lower=1> T;  // length of the time series
-  vector[N] y[T];
+  array[T] vector[N] y;
 
   // prior for the initial continuous hidden state
   vector[M] mu;
   cov_matrix[M] Sigma;
 
   // for Ab, Q
-  matrix[M, M + 1] Mu_x[K];
-  cov_matrix[M + 1] Omega_x[K];
-  cov_matrix[M] Psi_x[K];
-  real<lower=M - 1> nu_x[K];
+  array[K] matrix[M, M + 1] Mu_x;
+  array[K] cov_matrix[M + 1] Omega_x;
+  array[K] cov_matrix[M] Psi_x;
+  array[K] real<lower=M - 1> nu_x;
 
   // for Cd, S
-  matrix[N, M + 1] Mu_y[K];
-  cov_matrix[M + 1] Omega_y[K];
-  cov_matrix[N] Psi_y[K];
-  real<lower=N - 1> nu_y[K];
+  array[K] matrix[N, M + 1] Mu_y;
+  array[K] cov_matrix[M + 1] Omega_y;
+  array[K] cov_matrix[N] Psi_y;
+  array[K] real<lower=N - 1> nu_y;
 }
 
 parameters {
   // transition matrix
-  simplex[K] pi[K];
+  array[K] simplex[K] pi;
 
   // linear parameters for x
-  matrix[M, M] A[K];
-  vector[M] b[K];
-  cov_matrix[M] Q[K];
+  array[K] matrix[M, M] A;
+  array[K] vector[M] b;
+  array[K] cov_matrix[M] Q;
 
   // linear parameters for y
-  matrix[N, M] C[K];
-  vector[N] d[K];
-  cov_matrix[N] S[K];
+  array[K] matrix[N, M] C;
+  array[K] vector[N] d;
+  array[K] cov_matrix[N] S;
   
   // continuous hidden states
-  vector[M] x[T];
+  array[T] vector[M] x;
 }
 
 model {
@@ -63,7 +63,8 @@ model {
     append_col(C[k], d[k]) ~ matrix_normal_prec(Mu_y[k], S[k], Omega_y[k]);
   }
 
-  vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t])
+  // gamma[t, k] = p(z[t] = k, x[1:t], y[1:t])
+  array[T] vector[K] gamma;
 
   gamma[1] = rep_vector(multi_normal_prec_lpdf(x[1] | mu, Sigma) - log(K), K);
   for (k in 1:K)
@@ -81,12 +82,12 @@ model {
 } 
 
 generated quantities {
-  int<lower=1, upper=K> z_star[T];
+  array[T] int z_star;
   real log_p_z_star;
 
   {
-    int back_ptr[T, K];
-    vector[K] eta[T];
+    array[T, K] int back_ptr;
+    array[T] vector[K] eta;
 
     eta[1] = rep_vector(multi_normal_lpdf(x[1] | mu, Sigma) - log(K), K);
     for (k in 1:K)

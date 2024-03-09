@@ -26,29 +26,29 @@ data {
   int<lower=1> K;  // number of hidden states
   int<lower=1> N;  // number of observed features
   int<lower=1> T;  // length of the time series
-  vector[N] y[T];
+  array[T] vector[N] y;
 
   // for Ab, Q
-  matrix[N, N + 1] Mu[K];
-  cov_matrix[N + 1] Omega[K];
-  cov_matrix[N] Psi[K];
-  real<lower=N - 1> nu[K];
+  array[K] matrix[N, N + 1] Mu;
+  array[K] cov_matrix[N + 1] Omega;
+  array[K] cov_matrix[N] Psi;
+  array[K] real<lower=N - 1> nu;
 
   // for R, r
-  matrix[K - 1, N + 1] Mu_r[K];
-  cov_matrix[K - 1] Sigma_r[K];
-  cov_matrix[N + 1] Omega_r[K];
+  array[K] matrix[K - 1, N + 1] Mu_r;
+  array[K] cov_matrix[K - 1] Sigma_r;
+  array[K] cov_matrix[N + 1] Omega_r;
 }
 
 parameters {
   // linear parameters for y
-  matrix[N, N] A[K];
-  vector[N] b[K];
-  cov_matrix[N] Q[K];
+  array[K] matrix[N, N] A;
+  array[K] vector[N] b;
+  array[K] cov_matrix[N] Q;
 
   // linear parameters for nu
-  matrix[K - 1, N] R[K];
-  vector[K - 1] r[K];
+  array[K] matrix[K - 1, N] R;
+  array[K] vector[K - 1] r;
 }
 
 model {
@@ -59,7 +59,8 @@ model {
     append_col(R[k], r[k]) ~ matrix_normal_prec(Mu_r[k], Sigma_r[k], Omega_r[k]);
   }
 
-  vector[K] gamma[T];  // gamma[t, k] = p(z[t] = k, y[1:t]) 
+  // gamma[t, k] = p(z[t] = k, y[1:t])
+  array[T] vector[K] gamma;
 
   gamma[1] = rep_vector(-log(K), K);
   
@@ -75,12 +76,12 @@ model {
 }
 
 generated quantities {
-  int<lower=1, upper=K> z_star[T];
+  array[T] int z_star;
   real log_p_z_star;
 
   {
-    int back_ptr[T, K];
-    vector[K] eta[T];
+    array[T, K] int back_ptr;
+    array[T] vector[K] eta;
 
     eta[1] = rep_vector(-log(K), K);
 
