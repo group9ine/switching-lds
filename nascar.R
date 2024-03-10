@@ -2,21 +2,58 @@ library(data.table)
 library(ggplot2)
 library(cmdstanr)
 options(mc.cores = 2)
+theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 
-# read nascar dataset and take a subset
-nascar_full <- fread("data/nascar/dataset.csv", sep = ",")
-names(nascar_full) <- c("x", "y")
-nascar <- nascar_full[seq(1, 4e4 + 5e3, 150)]
-nrow(nascar)
+# synthetic nascar dataset
+z <- rep(1:4, each = 20, times = 3)
+theta <- pi / 20  # dtheta in the curves
+# 2D rotation matrix generating function
+rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
 
+# linear transformation matrix (roto-translation + bias)
+A <- function(z) {
+  if (z == 1) {
+    cbind(diag(1, 2), c(0.1, 0))
+  } else if (z == 2) {
+    cbind(rot(theta), -rot(theta) %*% c(1, 0) + c(1, 0) )
+  } else if (z == 3) {
+    cbind(diag(1, 2), c(-0.1, 0))
+  } else {
+    cbind(rot(theta), -rot(theta) %*% c(-1, 0) + c(-1, 0) )
+  }
+}
+
+# gaussian noise matrix
+Q <- function(z) {
+  MASS::mvrnorm(
+    n = 1, mu = c(0, 0),
+    Sigma = if (z %% 2) {  # straight sections (z odd)
+      matrix(c(5e-5, 0, 0, 1e-4), ncol = 2)
+    } else {  # curves (z even)
+      matrix(c(2.5e-4, 1e-5, 1e-5, 2.5e-4), ncol = 2)
+    }
+  )
+}
+
+# generate the data
+x <- matrix(0, nrow = 2, ncol = length(z))
+x[, 1] <- c(-1, -1)
+for (j in seq(1, length(z) - 1)) {
+  x[, j + 1] <- A(z[j]) %*% c(x[, j], 1)
+}
+# add noise only after having done all the linear transformations
+for (j in seq_along(z)) {
+  x[, j] <- x[, j] + Q(z[j])
+}
+
+nascar <- data.table(t(x))
+setnames(nascar, c("x", "y"))
 # rescale to avoid numerical issues
-nascar_scl <- nascar / mean(sqrt(diff(nascar$x)^2 + diff(nascar$y)^2))
-max(nascar); min(nascar)
-max(nascar_scl); min(nascar_scl)
+nascar <- nascar / nascar[, mean(sqrt(diff(x)^2 + diff(y)^2))]
 
-ggplot(nascar_scl, aes(x, y)) +
+ggplot(nascar, aes(x, y)) +
   geom_path(colour = "steelblue") +
-  geom_point(data = \(x) x[1, ], colour = "firebrick")
+  geom_point(data = \(x) x[1], colour = "firebrick", size = 3)
 
 # compile the base rSLDS model
 mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
@@ -26,24 +63,14 @@ mod$compile(cpp_options = list(
   stan_no_range_checks = TRUE
 ))
 
-# 2D rotation matrix generating function
-rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
-# estimate rotation angle
-theta <- 1 / 50
-
 # set up data and priors
 data_list <- list(
   K = 4,  # number of hidden states
   N = 2,  # dimension of observed data
-  T = nrow(nascar_scl),
-  y = as.matrix(nascar_scl),
+  T = nrow(nascar),
+  y = as.matrix(nascar),
   # MNW parameters for A, b, Q prior
-  Mu = list(
-    cbind(diag(1, 2), c(1, 0)),  # first straight
-    cbind(rot(theta), c(0, 0)),  # first curve
-    cbind(diag(1, 2), c(-1, 0)), # second straight
-    cbind(rot(theta), c(0, 0))   # second curve
-  ),
+  Mu = list(A(1), A(2), A(3), A(4)),
   Omega = rep(list(diag(1, 3)), 4),  # diagonal precision matrix
   # The exp. value of the Wishart distribution is nu * Psi,
   # so we're setting E[Q] = diag(1, 2) with these values.
@@ -92,3 +119,19 @@ par_name("A.4") |>
 par_name("b.1") |>
   fit$draws() |>
   bayesplot::mcmc_hist_by_chain()
+
+z_draws <- draws[, c(par_name("z_star.[0-9]"), "chain"), with = FALSE][
+  , lapply(.SD, mean), by = chain]
+z_draws <- melt(
+  z_draws, id.vars = "chain",
+  variable.name = "iter", value.name = "z_star"
+)[ , `:=`(iter = as.integer(gsub("[^0-9]", "", iter)),
+          chain = factor(chain))]
+
+ggplot(z_draws, aes(iter, z_star, colour = chain)) +
+  geom_point()
+
+par_name("A.3") |>
+  fit$draws(format = "df") |>
+  dplyr::filter(.chain == 2) |>
+  bayesplot::mcmc_hist()
