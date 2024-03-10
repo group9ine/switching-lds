@@ -46,9 +46,9 @@ data {
   real<lower=N - 1> nu_y;
   
   // for R, r
-  array[K] matrix[K - 1, N + 1] Mu_r;
+  array[K] matrix[K - 1, M + 1] Mu_r;
   array[K] cov_matrix[K - 1] Sigma_r;
-  array[K] cov_matrix[N + 1] Omega_r;
+  array[K] cov_matrix[M + 1] Omega_r;
 }
 
 parameters {
@@ -66,7 +66,7 @@ parameters {
   cov_matrix[N] S;
   
   // linear parameters for nu
-  array[K] matrix[K - 1, N] R;
+  array[K] matrix[K - 1, M] R;
   array[K] vector[K - 1] r;
   
   // continuous hidden states
