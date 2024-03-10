@@ -5,19 +5,21 @@ options(mc.cores = 2)
 theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 
 # synthetic nascar dataset
-z <- rep(1:4, each = 20, times = 3)
-theta <- pi / 20  # dtheta in the curves
+period <- 10
+dt <- 2 / period
+z <- rep(1:4, each = period, times = 12)
+theta <- pi / period  # dtheta in the curves
 # 2D rotation matrix generating function
 rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
 
 # linear transformation matrix (roto-translation + bias)
 A <- function(z) {
   if (z == 1) {
-    cbind(diag(1, 2), c(0.1, 0))
+    cbind(diag(1, 2), c(dt, 0))
   } else if (z == 2) {
     cbind(rot(theta), -rot(theta) %*% c(1, 0) + c(1, 0) )
   } else if (z == 3) {
-    cbind(diag(1, 2), c(-0.1, 0))
+    cbind(diag(1, 2), c(-dt, 0))
   } else {
     cbind(rot(theta), -rot(theta) %*% c(-1, 0) + c(-1, 0) )
   }
