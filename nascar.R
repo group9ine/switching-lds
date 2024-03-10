@@ -19,39 +19,52 @@ points(
 plot(nascar$x, type = "l")
 
 # Synthetic nascar
-z <- rep(1:4, each=20, times=4)
-#z <- sample(1:4, size = 300, replace = TRUE, prob = c(0.7, 0.3))
+z <- rep(1:4, each = 20, times = 4)
+# z <- sample(1:4, size = 300, replace = TRUE, prob = c(0.7, 0.3))
 theta <- pi / 20
 rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
 
 A <- function(z) {
   if (z == 1) {
     cbind(diag(1, 2), c(0.1, 0))
-  }
-  else if (z == 2) {
-    cbind(rot(theta), -rot(theta) %*% c(1,0) + c(1,0) )
-  } 
-  else if (z == 3) {
+  } else if (z == 2) {
+    cbind(rot(theta), -rot(theta) %*% c(1, 0) + c(1, 0) )
+  } else if (z == 3) {
     cbind(diag(1, 2), c(-0.1, 0))
-  }
-  else {
-    cbind(rot(theta), -rot(theta) %*% c(-1,0) + c(-1,0) )
+  } else {
+    cbind(rot(theta), -rot(theta) %*% c(-1, 0) + c(-1, 0) )
   }
 }
 
-x <- rep(list(c(0, 0)), length(z))
-x[[1]] <- c(-1, -1)
-for (i in seq_along(z)) {
-  x[[i + 1]] <- A(z[i]) %*% c(x[[i]],1) + rnorm(1, 0, 0.001)
+Q <- function(z) {
+  MASS::mvrnorm(
+    n = 1, mu = c(0, 0),
+    Sigma = if (z %% 2) {  # straight sections (z odd)
+      matrix(c(5e-5, 0, 0, 1e-4), ncol = 2)
+    } else {  # curves (z even)
+      matrix(c(2.5e-4, 1e-5, 1e-5, 2.5e-4), ncol = 2)
+    }
+  )
 }
-x[[1]] <- NULL
 
-data <- as.data.table(transpose(x))
+x <- matrix(0, nrow = 2, ncol = length(z))
+x[, 1] <- c(-1, -1)
+for (j in seq(1, length(z) - 1)) {
+  x[, j + 1] <- A(z[j]) %*% c(x[, j], 1)
+}
+# adding noise only after having done all the linear transformations
+for (j in seq_along(z)) {
+  x[, j] <- x[, j] + Q(z[j])
+}
+
+data <- data.table(t(x))
 setnames(data, c("x", "y"))
 
 # rescaling
 data <- data / mean(sqrt(diff(data$x)^2 + diff(data$y)^2))
-plot(data$x[1:80], data$y[1:80], type = "p")
+ggplot(data, aes(x, y)) +
+  geom_path() +
+  geom_point()
 
 sm <- stan_model(
   file = "stan/r-slds.stan",
