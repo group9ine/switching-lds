@@ -1,41 +1,32 @@
 library(data.table)
 library(ggplot2)
 library(rstan)
-options(mc.cores = parallel::detectCores() - 2)
+options(mc.cores = 2)
 rstan_options(auto_write = TRUE)
+theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 
-nascar_full <- fread("data/nascar/dataset.csv", sep = ",")
-names(nascar_full) <- c("x", "y")
-
-# take a subset
-nascar <- nascar_full[seq(1, 4e4 + 5e3, 200)]
-nrow(nascar)
-
-plot(nascar$x, nascar$y, type = "b")
-points(
-  nascar$x[1], nascar$y[1],
-  col = "firebrick", pch = 19
-)
-plot(nascar$x, type = "l")
-
-# Synthetic nascar
-z <- rep(1:4, each = 20, times = 4)
-# z <- sample(1:4, size = 300, replace = TRUE, prob = c(0.7, 0.3))
-theta <- pi / 20
+# synthetic nascar dataset
+period <- 10
+dt <- 2 / period
+z <- rep(1:4, each = period, times = 12)
+theta <- pi / period  # dtheta in the curves
+# 2D rotation matrix generating function
 rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
 
+# linear transformation matrix (roto-translation + bias)
 A <- function(z) {
   if (z == 1) {
-    cbind(diag(1, 2), c(0.1, 0))
+    cbind(diag(1, 2), c(dt, 0))
   } else if (z == 2) {
     cbind(rot(theta), -rot(theta) %*% c(1, 0) + c(1, 0) )
   } else if (z == 3) {
-    cbind(diag(1, 2), c(-0.1, 0))
+    cbind(diag(1, 2), c(-dt, 0))
   } else {
     cbind(rot(theta), -rot(theta) %*% c(-1, 0) + c(-1, 0) )
   }
 }
 
+# gaussian noise matrix
 Q <- function(z) {
   MASS::mvrnorm(
     n = 1, mu = c(0, 0),
@@ -57,19 +48,40 @@ for (j in seq_along(z)) {
   x[, j] <- x[, j] + Q(z[j])
 }
 
-data <- data.table(t(x))
-setnames(data, c("x", "y"))
+nascar <- data.table(t(x))
+setnames(nascar, c("x", "y"))
+# rescale to avoid numerical issues
+nascar <- nascar / nascar[, mean(sqrt(diff(x)^2 + diff(y)^2))]
 
-# rescaling
-data <- data / mean(sqrt(diff(data$x)^2 + diff(data$y)^2))
-ggplot(data, aes(x, y)) +
-  geom_path() +
-  geom_point()
+ggplot(nascar, aes(x, y)) +
+  geom_path(colour = "steelblue") +
+  geom_point(data = \(x) x[1], colour = "firebrick", size = 3)
 
 sm <- stan_model(
   file = "stan/r-slds.stan",
   model_name = "SLDS",
   allow_optimizations = TRUE
+)
+
+# set up data and priors
+data_list <- list(
+  K = 4,  # number of hidden states
+  N = 2,  # dimension of observed data
+  T = nrow(nascar),
+  y = as.matrix(nascar),
+  # MNW parameters for A, b, Q prior
+  Mu = list(A(1), A(2), A(3), A(4)),
+  Omega = rep(list(diag(1, 3)), 4),  # diagonal precision matrix
+  # The exp. value of the Wishart distribution is nu * Psi,
+  # so we're setting E[Q] = diag(1, 2) with these values.
+  # A lower nu gives a more homogenous distribution
+  Psi = rep(list(diag(0.5, 2)), 4),
+  nu = rep(2, 4),
+  # MN parameters for R, r prior
+  # without better intuition, pick something uniform
+  Mu_r = rep(list(matrix(1, nrow = 3, ncol = 3)), 4),
+  Sigma_r = rep(list(diag(1, 3)), 4),
+  Omega_r = rep(list(diag(1, 3)), 4)
 )
 
 fit <- sampling(
