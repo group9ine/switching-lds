@@ -18,20 +18,31 @@ points(
 )
 plot(nascar$x, type = "l")
 
-z <- sample(1:2, size = 300, replace = TRUE, prob = c(0.7, 0.3))
-theta <- pi / 12
+# Synthetic nascar
+z <- rep(1:4, each=20, times=4)
+#z <- sample(1:4, size = 300, replace = TRUE, prob = c(0.7, 0.3))
+theta <- pi / 20
+rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
+
 A <- function(z) {
   if (z == 1) {
-    matrix(c(cos(theta), sin(theta), -sin(theta), cos(theta)), ncol = 2)
-  } else {
-    matrix(c(cos(theta), -sin(theta), sin(theta), cos(theta)), ncol = 2)
+    cbind(diag(1, 2), c(0.1, 0))
+  }
+  else if (z == 2) {
+    cbind(rot(theta), -rot(theta) %*% c(1,0) + c(1,0) )
+  } 
+  else if (z == 3) {
+    cbind(diag(1, 2), c(-0.1, 0))
+  }
+  else {
+    cbind(rot(theta), -rot(theta) %*% c(-1,0) + c(-1,0) )
   }
 }
 
-x <- rep(list(matrix(c(0, 0), ncol = 1)), length(z))
-x[[1]] <- matrix(c(1, 1), ncol = 1)
+x <- rep(list(c(0, 0)), length(z))
+x[[1]] <- c(-1, -1)
 for (i in seq_along(z)) {
-  x[[i + 1]] <- A(z[i]) %*% x[[i]] + rnorm(1, 0, 0.001)
+  x[[i + 1]] <- A(z[i]) %*% c(x[[i]],1) + rnorm(1, 0, 0.001)
 }
 x[[1]] <- NULL
 
@@ -40,23 +51,16 @@ setnames(data, c("x", "y"))
 
 # rescaling
 data <- data / mean(sqrt(diff(data$x)^2 + diff(data$y)^2))
-plot(data$x, data$y, type = "l")
+plot(data$x[1:80], data$y[1:80], type = "p")
 
 sm <- stan_model(
-  file = "stan/slds.stan",
+  file = "stan/r-slds.stan",
   model_name = "SLDS",
   allow_optimizations = TRUE
 )
 
 fit <- sampling(
-  sm, data = list(
-    K = 2, N = 2, T = nrow(data),
-    y = as.matrix(data),
-    Mu = list(cbind(A(1), c(0, 0)), cbind(A(2), c(0, 0))),
-    Omega = rep(list(diag(1, 3)), 2),
-    Psi = rep(list(diag(0.5, 2)), 2),
-    nu = rep(2, 2)
-  ),
+  sm, data = data_list,
   chains = 2, iter = 3000, warmup = 1000
 )
 
