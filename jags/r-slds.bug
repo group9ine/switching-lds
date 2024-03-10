@@ -54,10 +54,8 @@ model {
     predx[1,1:D] ~ dmnorm(Ab[predz[1],1:D,] %*% x[T,1:D] + Ab[predz[1],D+1,], Q[predz[1],,]) 
     for (t in 2:T) {
         nu[(t+T-2),1:(K-1)] <- Rc[,1:D] %*% x + Rc[,(D+1)]
-        pisb[(T+t-2),1] <- plogis(nu[(T+t-2),1])
-        pisb[(T+t-2),1] <- plogis(-nu[(T+t-2),1]) * plogis(nu[(T+t-2),2])
-        for (k in 3:K) {
-            pisb[(T+t-2),k] <- prod(plogis(-nu[(T+t-2),1:(k-1)])) * ifelse(k<K,plogis(nu[(T+t-2),k]),1)
+        for (k in 1:K) {
+            pisb[(T+t-1),k] = ifelse(k>1, prod(plogis(-nu[(T+t-1),1:(k-1)])), 1) * ifelse(k<K,plogis(nu[(T+t-1),k]),1)
         }
         predz[t] ~ dcat(pisb[(T+t-1),])
         predx[t,1:D] ~ dmnorm(Ab[predz[t],1:D,] %*% predx[t-1,1:D] + Ab[predz[t],D+1,], Q[predz[t],,]) 
