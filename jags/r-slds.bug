@@ -35,7 +35,7 @@ model {
     
     # update rules
     for (t in 2:T) { 
-        nu[t,1:(K-1)] <- Rc[,1:D] %*% x + Rc[,(D+1)]
+        nu[t,1:(K-1)] <- Rc[,1:D] %*% x[t-1,1:D] + Rc[,(D+1)]
         for (k in 1:K) {
             pisb[(t-1),k] = ifelse(k>1, prod(plogis(-nu[t,1:(k-1)])), 1) * ifelse(k<K,plogis(nu[t,k]),1)
         }
@@ -45,7 +45,7 @@ model {
     }
     
     # final prediction for trajectory continuation
-    nu[T,1:(K-1)] <- Rc[,1:D] %*% x + Rc[,(D+1)]
+    nu[T,1:(K-1)] <- Rc[,1:D] %*% x[T,1:D] + Rc[,(D+1)]
     for (k in 1:K) {
         pisb[T,k] = ifelse(k>1, prod(plogis(-nu[T,1:(k-1)])), 1) * ifelse(k<K,plogis(nu[T,k]),1)
     }
@@ -53,7 +53,7 @@ model {
     predz[1] ~ dcat(pisb[T,])
     predx[1,1:D] ~ dmnorm(Ab[predz[1],1:D,] %*% x[T,1:D] + Ab[predz[1],D+1,], Q[predz[1],,]) 
     for (t in 2:T) {
-        nu[(t+T-2),1:(K-1)] <- Rc[,1:D] %*% x + Rc[,(D+1)]
+        nu[(t+T-1),1:(K-1)] <- Rc[,1:D] %*% predx[t-1,1:D] + Rc[,(D+1)]
         for (k in 1:K) {
             pisb[(T+t-1),k] = ifelse(k>1, prod(plogis(-nu[(T+t-1),1:(k-1)])), 1) * ifelse(k<K,plogis(nu[(T+t-1),k]),1)
         }
