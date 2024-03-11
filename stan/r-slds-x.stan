@@ -12,11 +12,13 @@ functions {
   
   vector logp_stick_break(vector nu) {
     int K = size(nu) + 1;
-    vector[K - 1] denoms = log1p_exp(nu);
+    real sum_denoms = 0.0;
     vector[K] p;
-    for (k in 1:(K - 1))
-      p[k] = nu[k] - sum(denoms[1:k]);
-    p[K] = -sum(denoms);
+    for (k in 1:(K - 1)) {
+      sum_denoms += log1p_exp(nu[k]);
+      p[k] = nu[k] - sum_denoms;
+    }
+    p[K] = -sum_denoms;
 
     return p;
   }
