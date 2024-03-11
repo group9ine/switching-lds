@@ -79,3 +79,7 @@ for (i in 1:niter) {
  plot(ggplot() + geom_point(aes(results.list[[i]]$x1, results.list[[i]]$x2, col=results.list[[i]]$z))+geom_path(aes(results.list[[i]]$x1, results.list[[i]]$x2)))
 }
 print("Done")
+
+
+library(data.table)
+as.data.table(as.mcmc(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=10000))) |> fwrite("parameters.csv")
