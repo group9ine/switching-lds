@@ -56,7 +56,13 @@
 \newcommand{\given}[1][]{\:#1\vert\:}
 \newcommand{\lkl}{\mathcal{L}}
 \newcommand{\nrm}{\mathcal{N}}
+\makeatletter
+\newcommand*{\@transpose}[2]{\raisebox{\depth}{$\m@th#1\intercal$}}
+\newcommand*{\tran}{{\mathpalette\@transpose{}}}
+\makeatother
+\DeclareMathOperator{\MN}{MN}
 \DeclareMathOperator{\MNIW}{MNIW}
+\DeclareMathOperator*{\tr}{tr}
 \DeclareMathOperator*{\argmax}{arg\,max}
 %% redefinitions
 \renewcommand{\theta}{\vartheta}

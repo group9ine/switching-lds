@@ -71,7 +71,7 @@ low-probability states, and is commonly used in similar inference problems
 involving hidden Markov models or other state space models
 \autocite{Damiano2018}.
 
-\subsection{The forward algorithm}
+\subsection{The forward algorithm}\label{sec:forward-algorithm}
 The basic idea behind the forward algorithm is to exploit a recursive
 relationship to build the full likelihood: indeed, consider the quantity
 \begin{equation}
@@ -104,8 +104,8 @@ densities:
   \lkl_{k}(x_{t}) &\coloneq p(x_{t} \given z_{t} = k, x_{t-1})
     = \nrm(A_{k} x_{t-1} + b_{k}, Q_{k}).
 \end{align}
-Then, the remaining terms in the sum in~\eqref{eq:gamma-relation} are nothing
-else than $\gamma_{t-1}(j)$, giving us the recursive relation we needed:
+Then, the remaining terms in the sum in Eq.~\eqref{eq:gamma-relation} are
+nothing else than $\gamma_{t-1}(j)$, giving us the recursive relation we needed:
 \begin{equation}
   \gamma_{t}(k) = \lkl_{k}(y_{t})\, \lkl_{k}(x_{t})
     \sum_{j=1}^{K} \pi_{jk} \gamma_{t-1}(j).
@@ -148,6 +148,19 @@ the inverse Wisharts and $\nu_{x}, \nu_{y}$ their degrees of freedom. The
 returned random matrices with $M + 1$ columns are then split between the
 matrices $A_{k}$ and $C_{k}$ and their corresponding bias vectors $b_{k}$ and
 $d_{k}$.
+
+At the time of writing, Stan has not yet implemented a matrix normal
+distribution function \autocite{Lee17}. Therefore, we have resorted to
+implementing it by defining the logarithm of the probability density. The
+explicit form of the matrix normal distribution with parameters $M \in \R^{p
+\times q}$, $\Sigma \in \R^{p \times p}$, $\Omega \in \R^{q \times q}$ is
+\autocite{DeWaal06}
+\begin{multline}
+  p(X \given M, \Sigma, \Omega) =
+    \frac{1}{(2 \pi)^{pq/2} \abs{\Omega}^{p/2} \abs{\Sigma}^{q/2}} \\
+    \cdot \exp\left\{-\frac{1}{2}\tr\left[\Omega^{-1} (X - M)^\tran
+                     \Sigma^{-1} (X - M)\right]\right\}.
+\end{multline}
 
 \subsection{Reconstructing the hidden states}
 Since we marginalize out the $z$ sequence during the sampling procedure, we need
@@ -197,6 +210,69 @@ $\hat{z}_{1:T}$:
 \end{equation}
 The procedure is thus substantially the same as the forward algorithm, but with
 maximization replacing summation.
+
+\section{Adding recursion}
+A possible improvement over the standard \abbr{slds} model is the one proposed
+by \textcite{Barber06}, referred to by \textcite{Linderman17} as
+\emph{recurrent} \abbr{slds}. The recursivity here consists in adding a link
+between the current discrete hidden state $z_{t}$ and the continuous hidden
+state at the previous time step $x_{t-1}$. In this way the regime switching can
+have a non-Markovian dependence on the continuous latent state, greatly
+enhancing the descriptive power in situations where there is strong multi-time
+step correlation in the linear dynamics.
+
+To model the connection $z_{t} \given x_{t-1}$, \textcite{Linderman17} propose a
+linear transformation combined with a stick-breaking process to construct a
+vector $\pi_{z_{t}}$ of transition probabilities. Specifically, let $\nu_{t} \in
+\R^{K-1}$, defined by
+\begin{equation}
+  \nu_{t} = R_{z_{t-1}} x_{t-1} + r_{z_{t-1}},
+\end{equation}
+where $R_{k} \in \R^{K-1 \times M}$ and $r_{k} \in \R^{K-1}$. The relative
+magnitudes of the matrix $R$ and the bias vector $r$ control the weight given to
+the recursive influence ($R$) compared to the pure Markov dynamics between the
+$z$ states ($r$) \autocite{Linderman17}. The transition probabilities of $z_{t}$
+conditioned to $x_{t-1}$ are then given by
+\begin{equation}
+  z_{t} \given x_{t-1} \sim \pi_{\mathrm{SB}}(\nu_{t}),
+  \label{eq:nu-xtm1}
+\end{equation}
+where $\pi_{\mathrm{SB}} \colon \R^{K-1} \to [0,1]^{K}$ is the stick-breaking
+function, mapping the vector $\nu_{t}$ to a normalized probability vector. Its
+\emph{k}th component is defined as
+\begin{equation}
+  \pi_{\mathrm{SB}}^{(k)}(\nu) =
+  \begin{cases}
+    \sigma(\nu_{k}) \prod_{j = 1}^{k} (1 - \sigma(\nu_{j}))
+    \quad &\text{if } k \leq K - 1, \\
+    \prod_{j = 1}^{K - 1} (1 - \sigma(\nu_{j})) \quad &\text{if } k = K,
+  \end{cases}
+\end{equation}
+where $\sigma(x) = 1 / (1 + e^{-x})$ denotes the sigmoid function.
+
+The forward algorithm described in Section~\ref{sec:forward-algorithm} can
+readily accommodate this change in the transition probabilities. Indeed,
+recovering the expansion of $\gamma_{t}(k)$ from Eq.~\eqref{eq:gamma-relation},
+we just need to adapt the term $p(z_{t} = k \given z_{t-1} = j, x_{1:t-1},
+y_{1:t-1})$. The same is valid for the Viterbi algorithm, of course. $p(z_{t} =
+k \given z_{t-1} = j)$ becomes $p(z_{t} = k \given z_{t-1} = j, x_{t-1})$, which
+is the \emph{k}th component of the stick-breaking function as defined above.
+Working with logarithms, we can write this term quite simply as
+\begin{equation}
+  \log p(z_{t} = k \given z_{t-1} = j, x_{t-1}) = \nu_{k} - \sum_{j=1}^{k}
+  \log(1 + e^{\nu_{j}}),
+\end{equation}
+with $\nu = R_{j}x_{t-1} + r_{j}$ setting the dependence on $x_{t-1}$.
+
+We also need additional priors for $R_{k}$ and $r_{k}$. In keeping with the
+priors for the other sets of linear parameters, we chose a matrix normal
+distribution:
+\begin{equation}
+  (R_{k}, r_{k}) \sim \MN(M_{r}, \Sigma_{r}, \Omega_{r}).
+\end{equation}
+Here $M_{r} \in \R^{(K-1) \times (M+1)}$ is the mean matrix, while $\Sigma_{r}
+\in \R^{(K-1) \times (K-1)}$ and $\Omega_{r} \in \R^{(M+1) \times (M+1)}$ are
+the between-row and between-column covariance matrix respectively.
 
 \printbibliography
 \end{document}
