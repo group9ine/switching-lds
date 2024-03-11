@@ -9,6 +9,7 @@ theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 period <- 10
 dt <- 2 / period
 z <- rep(1:4, each = period, times = 12)
+
 theta <- pi / period  # dtheta in the curves
 # 2D rotation matrix generating function
 rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
@@ -38,12 +39,13 @@ Q <- function(z) {
   )
 }
 
+# generate the data
 x <- matrix(0, nrow = 2, ncol = length(z))
 x[, 1] <- c(-1, -1)
 for (j in seq(1, length(z) - 1)) {
   x[, j + 1] <- A(z[j]) %*% c(x[, j], 1)
 }
-# adding noise only after having done all the linear transformations
+# add noise only after having done all the linear transformations
 for (j in seq_along(z)) {
   x[, j] <- x[, j] + Q(z[j])
 }
@@ -86,7 +88,7 @@ data_list <- list(
 
 fit <- sampling(
   sm, data = data_list,
-  chains = 2, iter = 3000, warmup = 1000
+  chains = 6, iter = 2000, warmup = 1000
 )
 
 params <- as.data.frame(extract(fit, permuted = FALSE))

@@ -42,7 +42,7 @@ data {
 
 parameters {
   // linear parameters for y
-  array[K] matrix[N, N] A;
+  array[K] matrix<lower = -1, upper = 1>[N, N] A;
   array[K] vector[N] b;
   array[K] cov_matrix[N] Q;
 
