@@ -7,8 +7,9 @@ individual ant for a colony and nest size.
 
 The ant track-data in each file are organised in three columns:
 
-- Column 1: Time in seconds (absolute time) and is therefore comparable accorss ants.
-- Column 2: x-coordinate in mm.
-- Column 3: y-coordinate in mm.
+- Column 1: Time in seconds (absolute time, so comparable across ants)
+- Column 2: x-coordinate in mm
+- Column 3: y-coordinate in mm
 
-The centre of the nest exit is located at $(0.5 x_\mathrm{max}, y_\mathrm{max})$.
+The centre of the nest exit is located at $(0.5 x_\mathrm{max},
+y_\mathrm{max})$.
