@@ -46,7 +46,7 @@ plot(ggplot(data[subset,]) +geom_point(aes(x, y, col=as.factor(truez[subset]))))
 mod <- jags.model("jags/r-slds.bug", mod_data)
 
 
-update(mod, 20000) # burn-in
+update(mod, 30000) # burn-in
 
 chain <- coda.samples(mod , c("predx","predz"), n.iter=niter) # sample
 
@@ -78,8 +78,9 @@ print(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=1))
 for (i in 1:niter) {
  plot(ggplot() + geom_point(aes(results.list[[i]]$x1, results.list[[i]]$x2, col=results.list[[i]]$z))+geom_path(aes(results.list[[i]]$x1, results.list[[i]]$x2)))
 }
-print("Done")
-
 
 library(data.table)
 as.data.table(as.mcmc(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=10000))) |> fwrite("parameters.csv")
+
+
+print("Done")
