@@ -50,7 +50,8 @@ pacman <- data.table(t(x))
 setnames(pacman, c("x", "y"))
 
 # rescale to avoid numerical issues
-pacman <- 10 * pacman / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+sc_fct <- 10 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+pacman <- pacman * sc_fct
 
 ggplot(pacman, aes(x, y)) +
   geom_path(colour = "steelblue") +
@@ -71,7 +72,11 @@ data_list <- list(
   T = nrow(pacman),
   y = as.matrix(pacman),
   # MNW parameters for A, b, Q prior
-  Mu = list(A(1), A(2), A(3)),
+  Mu = list(
+    cbind(diag(1, 2), sc_fct * c(dt, dt)),
+    A(2),
+    cbind(diag(1, 2), -sc_fct * c(dt, dt))
+  ),
   Omega = rep(list(diag(1, 3)), 3),  # diagonal precision matrix
   # The exp. value of the Wishart distribution is nu * Psi,
   # so we're setting E[Q] = diag(1, 2) with these values.
@@ -85,21 +90,8 @@ data_list <- list(
   Omega_r = rep(list(diag(1, 3)), 3)
 )
 
-init_list <- function() {
-  list(
-    A = list(
-      diag(1 + 0.1 * rnorm(1), 2),
-      rot(theta + 0.1 * rnorm(1)),
-      diag(1 + 0.1 * rnorm(1), 2)
-    ),
-    b = rep(list(0.05 * rnorm(2)), 3),
-    Q = rep(list(diag(1 + 0.1 * rnorm(1), 2)), 3)
-  )
-}
-
 fit <- mod$sample(
   data = data_list,
-  init = init_list,
   output_dir = "out",
   chains = 2,
   iter_warmup = 1000,
@@ -107,3 +99,23 @@ fit <- mod$sample(
   show_exceptions = TRUE
 )
 
+# save results to file
+fit$save_object(file = "out/pacman_fit.rds")
+
+draws <- fit$draws(format = "df") |> as.data.table()
+names(draws) <- gsub("[.]|__", "", names(draws))
+
+par_name <- \(rgx) names(draws)[grep(rgx, names(draws))]
+
+z_star <- melt(
+  draws[, lapply(.SD, mean), by = chain, .SDcols = par_name("z_star")],
+  id.vars = "chain", variable.name = "iter", value.name = "z"
+)[, `:=`(chain = factor(chain), iter = as.integer(gsub("[^0-9]", "", iter)))]
+
+ggplot(z_star, aes(iter, z)) +
+  geom_point() +
+  facet_wrap(vars(chain), nrow = 2)
+
+par_name("A.3") |>
+  fit$draws() |>
+  bayesplot::mcmc_hist_by_chain()
