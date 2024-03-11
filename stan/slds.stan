@@ -1,4 +1,5 @@
 functions {
+  // returns the log-pdf of a matrix normal, with precision matrices
   real matrix_normal_prec_lpdf(matrix X, matrix M, matrix U, matrix V) {
     int N = rows(X);
     int P = cols(X);
@@ -41,39 +42,49 @@ model {
     append_col(A[k], b[k]) ~ matrix_normal_prec(Mu[k], Q[k], Omega[k]);
   }
 
-  // gamma[t, k] = p(z[t] = k, y[1:t])
+  // gamma[t, k] = log p(z[t] = k, y[1:t])
   array[T] vector[K] gamma;
 
+  // initialize with prior log p(z[1] = k), uniform
   gamma[1] = rep_vector(-log(K), K);
   
+  // forward algorithm main loop
   for (t in 2:T) {
     for (k in 1:K) {
+      // create vector with logged entries, then do
+      // log(exp(v1) + ... + exp(vk)) with log_sum_exp
       gamma[t, k] = log_sum_exp(gamma[t - 1] + log(to_vector(pi[, k])))
+        // log-likelihood log p(y[t] | z[t] = k, x[t])
         + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
-  
+
+  // final marginalization over z
   target += log_sum_exp(gamma[T]);
 }
 
 generated quantities {
+  // predicted maximum-probability sequence of hidden states
   array[T] int z_star;
-  real log_p_z_star;
 
   {
+    real log_p_z_star;
     array[T, K] int back_ptr;
     array[T] vector[K] eta;
 
+    // initialize the recursion with the uniform prior log p(z[1] = k)
     eta[1] = rep_vector(-log(K), K);
 
     real max_logp;
     vector[K] logp;
  
+    // Viterbi algorithm main loop
     for (t in 2:T) {
       for (k in 1:K) {
         max_logp = negative_infinity();
         logp = eta[t - 1] + log(to_vector(pi[, k]));
 
+        // search for the max over logp and save the state in back_ptr
         for (j in 1:K) {
           if (logp[j] > max_logp) {
             max_logp = logp[j];
@@ -81,20 +92,22 @@ generated quantities {
           }
         }
         
+        // complete eta with the log-likelihood part
         eta[t, k] = max_logp
           + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
       }
     }
 
+    // final maximization + loop to find the argmax
     log_p_z_star = max(eta[T]);
-
     for (k in 1:K) {
       if (eta[T, k] == log_p_z_star) {
         z_star[T] = k;
         break;
       }
     }
-    
+
+    // fill z_star by traversing the back_ptr array
     for (t in 1:(T - 1)) {
       z_star[T - t] = back_ptr[T - t + 1, z_star[T - t + 1]];
     }
