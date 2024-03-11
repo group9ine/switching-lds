@@ -19,7 +19,7 @@ functions {
     vector[K] p;
     for (k in 1:(K - 1)) {
       sum_denoms += log1p_exp(nu[k]);
-      p[k] = nu[k] - sum(denoms[1:k]);
+      p[k] = nu[k] - sum_denoms;
     }
     p[K] = -sum_denoms;
 
