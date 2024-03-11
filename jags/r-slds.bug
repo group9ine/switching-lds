@@ -9,7 +9,7 @@ model {
         Id2[d,1:(D+1)] <- c(rep(0, d-1),1,rep(0,D+1-d))
     }
     Od <- rep(0, D+1)
-    a = rep(1,K)
+    a <-  rep(1,K)
     
     Ab_mean[D+1,1:D] <- rep(0, D)
     
@@ -37,27 +37,27 @@ model {
     for (t in 2:T) { 
         nu[t,1:(K-1)] <- Rc[,1:D] %*% x[t-1,1:D] + Rc[,(D+1)]
         for (k in 1:K) {
-            pisb[(t-1),k] = ifelse(k>1, prod(plogis(-nu[t,1:(k-1)])), 1) * ifelse(k<K,plogis(nu[t,k]),1)
+            pisb[(t-1),k] <- ifelse(k>1, prod(plogis(-nu[t,1:(k-1)])), 1) * ifelse(k<K,plogis(nu[t,k]),1)
         }
-        z[t] ~ dcat(pisb[t,])
+        z[t] ~ dcat(pisb[t-1,])
         x[t,1:D] ~ dmnorm(Ab[z[t],1:D,] %*% x[t-1,1:D] + Ab[z[t],D+1,], Q[z[t],,]) 
         ## multivariate defined in terms of covariance matrix
     }
     
     # final prediction for trajectory continuation
-    nu[T,1:(K-1)] <- Rc[,1:D] %*% x[T,1:D] + Rc[,(D+1)]
+    prednu[1,1:(K-1)] <- Rc[,1:D] %*% x[T,1:D] + Rc[,(D+1)]
     for (k in 1:K) {
-        pisb[T,k] = ifelse(k>1, prod(plogis(-nu[T,1:(k-1)])), 1) * ifelse(k<K,plogis(nu[T,k]),1)
+        predpisb[1,k] <- ifelse(k>1, prod(plogis(-prednu[1,1:(k-1)])), 1) * ifelse(k<K,plogis(prednu[1,k]),1)
     }
     
-    predz[1] ~ dcat(pisb[T,])
+    predz[1] ~ dcat(predpisb[1,])
     predx[1,1:D] ~ dmnorm(Ab[predz[1],1:D,] %*% x[T,1:D] + Ab[predz[1],D+1,], Q[predz[1],,]) 
     for (t in 2:T) {
-        nu[(t+T-1),1:(K-1)] <- Rc[,1:D] %*% predx[t-1,1:D] + Rc[,(D+1)]
+        prednu[t,1:(K-1)] <- Rc[,1:D] %*% predx[t-1,1:D] + Rc[,(D+1)]
         for (k in 1:K) {
-            pisb[(T+t-1),k] = ifelse(k>1, prod(plogis(-nu[(T+t-1),1:(k-1)])), 1) * ifelse(k<K,plogis(nu[(T+t-1),k]),1)
+            predpisb[t,k] <-  ifelse(k<K,plogis(prednu[t,k]),1) * ifelse(k>1, prod(plogis(-prednu[t,1:(k-1)])), 1)
         }
-        predz[t] ~ dcat(pisb[(T+t-1),])
+        predz[t] ~ dcat(predpisb[(t-1),])
         predx[t,1:D] ~ dmnorm(Ab[predz[t],1:D,] %*% predx[t-1,1:D] + Ab[predz[t],D+1,], Q[predz[t],,]) 
     }
 }
