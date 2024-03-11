@@ -19,6 +19,38 @@
 
 \refsection{0}
   \datalist[entry]{nty/global//global/global}
+    \entry{Barber06}{article}{}
+      \name{author}{1}{}{%
+        {{hash=9a97f74e5fb11fe785cbe0a83fc5276c}{%
+           family={Barber},
+           familyi={B\bibinitperiod},
+           given={David},
+           giveni={D\bibinitperiod}}}%
+      }
+      \strng{namehash}{9a97f74e5fb11fe785cbe0a83fc5276c}
+      \strng{fullhash}{9a97f74e5fb11fe785cbe0a83fc5276c}
+      \strng{bibnamehash}{9a97f74e5fb11fe785cbe0a83fc5276c}
+      \strng{authorbibnamehash}{9a97f74e5fb11fe785cbe0a83fc5276c}
+      \strng{authornamehash}{9a97f74e5fb11fe785cbe0a83fc5276c}
+      \strng{authorfullhash}{9a97f74e5fb11fe785cbe0a83fc5276c}
+      \field{sortinit}{B}
+      \field{sortinithash}{d7095fff47cda75ca2589920aae98399}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{journaltitle}{Journal of Machine Learning Research}
+      \field{number}{89}
+      \field{title}{Expectation Correction for Smoothed Inference in Switching Linear Dynamical Systems}
+      \field{volume}{7}
+      \field{year}{2006}
+      \field{pages}{2515\bibrangedash 2540}
+      \range{pages}{26}
+      \verb{urlraw}
+      \verb http://jmlr.org/papers/v7/barber06a.html
+      \endverb
+      \verb{url}
+      \verb http://jmlr.org/papers/v7/barber06a.html
+      \endverb
+    \endentry
     \entry{Carpenter17}{article}{}
       \name{author}{10}{}{%
         {{hash=5321a7ac2b0407bc405fa8816fd73f09}{%
@@ -154,6 +186,252 @@
       \verb https://doi.org/10.5281/zenodo.1284341
       \endverb
     \endentry
+    \entry{DeWaal06}{inbook}{}
+      \name{author}{1}{}{%
+        {{hash=4adcc0f4d60060eebe9cd7358ae362a1}{%
+           family={De\bibnamedelima Waal},
+           familyi={D\bibinitperiod\bibinitdelim W\bibinitperiod},
+           given={D.\bibnamedelimi J.},
+           giveni={D\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+      }
+      \name{editor}{4}{}{%
+        {{hash=3e3c22dfe3b36ff075adfaa64ce7661a}{%
+           family={Kotz},
+           familyi={K\bibinitperiod},
+           given={Samuel},
+           giveni={S\bibinitperiod}}}%
+        {{hash=b975cbb164a115bf0a48ade7c34a8724}{%
+           family={Read},
+           familyi={R\bibinitperiod},
+           given={Campbell\bibnamedelima B.},
+           giveni={C\bibinitperiod\bibinitdelim B\bibinitperiod}}}%
+        {{hash=d6a4298c29df837a232fbaf7852f113c}{%
+           family={Balakrishnan},
+           familyi={B\bibinitperiod},
+           given={Narayanaswamy},
+           giveni={N\bibinitperiod}}}%
+        {{hash=e88cd066bd77ee2a12cb919541933953}{%
+           family={Vidakovic},
+           familyi={V\bibinitperiod},
+           given={Brani},
+           giveni={B\bibinitperiod}}}%
+      }
+      \name{editora}{1}{}{%
+        {{hash=42134aac82ec7ee488d5679523870362}{%
+           family={Johnson},
+           familyi={J\bibinitperiod},
+           given={Norman\bibnamedelima L.},
+           giveni={N\bibinitperiod\bibinitdelim L\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {John Wiley \& Sons, Ltd}%
+      }
+      \strng{namehash}{4adcc0f4d60060eebe9cd7358ae362a1}
+      \strng{fullhash}{4adcc0f4d60060eebe9cd7358ae362a1}
+      \strng{bibnamehash}{4adcc0f4d60060eebe9cd7358ae362a1}
+      \strng{authorbibnamehash}{4adcc0f4d60060eebe9cd7358ae362a1}
+      \strng{authornamehash}{4adcc0f4d60060eebe9cd7358ae362a1}
+      \strng{authorfullhash}{4adcc0f4d60060eebe9cd7358ae362a1}
+      \strng{editorbibnamehash}{64c66fc09faac063d4871c2a5b2f9d4f}
+      \strng{editornamehash}{64c66fc09faac063d4871c2a5b2f9d4f}
+      \strng{editorfullhash}{801d4a5fc9dc7aa8fb7df14e88d3a102}
+      \strng{editorabibnamehash}{42134aac82ec7ee488d5679523870362}
+      \strng{editoranamehash}{42134aac82ec7ee488d5679523870362}
+      \strng{editorafullhash}{42134aac82ec7ee488d5679523870362}
+      \field{sortinit}{D}
+      \field{sortinithash}{6f385f66841fb5e82009dc833c761848}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{booktitle}{Encyclopedia of Statistical Sciences}
+      \field{edition}{2}
+      \field{editoratype}{founder}
+      \field{isbn}{9780471667193}
+      \field{month}{12}
+      \field{title}{Matrix-Valued Distributions}
+      \field{volume}{7}
+      \field{year}{2005}
+      \field{pages}{4613\bibrangedash 4620}
+      \range{pages}{8}
+      \verb{doi}
+      \verb https://doi.org/10.1002/0471667196.ess1565.pub2
+      \endverb
+      \verb{urlraw}
+      \verb https://onlinelibrary.wiley.com/doi/abs/10.1002/0471667196.ess1565.pub2
+      \endverb
+      \verb{url}
+      \verb https://onlinelibrary.wiley.com/doi/abs/10.1002/0471667196.ess1565.pub2
+      \endverb
+    \endentry
+    \entry{Lee17}{software}{}
+      \name{author}{30}{}{%
+        {{hash=fb04571d965766ee6d71dafbd3eb452e}{%
+           family={Lee},
+           familyi={L\bibinitperiod},
+           given={Daniel},
+           giveni={D\bibinitperiod}}}%
+        {{hash=5321a7ac2b0407bc405fa8816fd73f09}{%
+           family={Carpenter},
+           familyi={C\bibinitperiod},
+           given={Bob},
+           giveni={B\bibinitperiod}}}%
+        {{hash=137297e0019ba55bca6f9b200782ae52}{%
+           family={Li},
+           familyi={L\bibinitperiod},
+           given={Peter},
+           giveni={P\bibinitperiod}}}%
+        {{hash=1982fa604a3f94837efceaa53330b2a4}{%
+           family={Betancourt},
+           familyi={B\bibinitperiod},
+           given={Michael},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f4e8f87bef6d6509822974a11b7bf86c}{%
+           family={maverickg},
+           familyi={m\bibinitperiod}}}%
+        {{hash=406d0990ce229da1335a36f689db24cd}{%
+           family={Trangucci},
+           familyi={T\bibinitperiod},
+           given={Rob},
+           giveni={R\bibinitperiod}}}%
+        {{hash=13e542215366001a04c3d21163d79458}{%
+           family={Brubaker},
+           familyi={B\bibinitperiod},
+           given={Marcus},
+           giveni={M\bibinitperiod}}}%
+        {{hash=79350e7d794b1d79bd0b84bfe0df533e}{%
+           family={Inacio},
+           familyi={I\bibinitperiod},
+           given={Marco},
+           giveni={M\bibinitperiod}}}%
+        {{hash=325d4aac1c19d75fbb56bc6416232ab1}{%
+           family={seantalts},
+           familyi={s\bibinitperiod}}}%
+        {{hash=d5b428504b3d9ba7a8bff99900f17ba5}{%
+           family={Morris},
+           familyi={M\bibinitperiod},
+           given={Mitzi},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f7b1201d8dbb17276041ba494d6c33be}{%
+           family={Margossian},
+           familyi={M\bibinitperiod},
+           given={Charles},
+           giveni={C\bibinitperiod}}}%
+        {{hash=9b4bd774638a5e11db087a94dc4950b1}{%
+           family={Kucukelbir},
+           familyi={K\bibinitperiod},
+           given={Alp},
+           giveni={A\bibinitperiod}}}%
+        {{hash=83e8264af49b6bdda66169cde9febd65}{%
+           family={Sakrejda},
+           familyi={S\bibinitperiod},
+           given={Krzysztof},
+           giveni={K\bibinitperiod}}}%
+        {{hash=bcdb5188f9eb292644ca91bc348310a1}{%
+           family={bgoodri},
+           familyi={b\bibinitperiod}}}%
+        {{hash=e3ce1d4c288d4026e1c1fbd0a445dbd3}{%
+           family={Vákár},
+           familyi={V\bibinitperiod},
+           given={Matthijs},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f37929ddb55feb1058579820a0b35c07}{%
+           family={Arnold},
+           familyi={A\bibinitperiod},
+           given={Jeffrey},
+           giveni={J\bibinitperiod}}}%
+        {{hash=d0ce54a4d6edc172f98e94fb457af967}{%
+           family={Johnson},
+           familyi={J\bibinitperiod},
+           given={Andrew},
+           giveni={A\bibinitperiod}}}%
+        {{hash=40340af3551b2e9ad113104a9472156c}{%
+           family={Bales},
+           familyi={B\bibinitperiod},
+           given={Ben},
+           giveni={B\bibinitperiod}}}%
+        {{hash=2eea63d267ed5f1cce621438ec43fcdf}{%
+           family={Hoffman},
+           familyi={H\bibinitperiod},
+           given={Matt},
+           giveni={M\bibinitperiod}}}%
+        {{hash=0d9e40b6a9d0090c9ad6230ab306c289}{%
+           family={wds15},
+           familyi={w\bibinitperiod}}}%
+        {{hash=020b934869690cbd086598e37534cc85}{%
+           family={Adler},
+           familyi={A\bibinitperiod},
+           given={Avraham},
+           giveni={A\bibinitperiod}}}%
+        {{hash=831126fd259babc16b5bd86bbc5f0098}{%
+           family={Tran},
+           familyi={T\bibinitperiod},
+           given={Dustin},
+           giveni={D\bibinitperiod}}}%
+        {{hash=9ad751bf39a1813edb95bf3ab399edb5}{%
+           family={Stukalov},
+           familyi={S\bibinitperiod},
+           given={Alexey},
+           giveni={A\bibinitperiod}}}%
+        {{hash=bbf36b7a355588facab11ae3ced0ff5b}{%
+           family={weberse2},
+           familyi={w\bibinitperiod}}}%
+        {{hash=6b898b75aebf841237f23a86b5eac93e}{%
+           family={Goedman},
+           familyi={G\bibinitperiod},
+           given={Rob\bibnamedelima J},
+           giveni={R\bibinitperiod\bibinitdelim J\bibinitperiod}}}%
+        {{hash=8d1cb9b1bacd12a30f28c3f3ff502525}{%
+           family={Horn},
+           familyi={H\bibinitperiod},
+           given={Kevin\bibnamedelimb S.\bibnamedelimi Van},
+           giveni={K\bibinitperiod\bibinitdelim S\bibinitperiod\bibinitdelim V\bibinitperiod}}}%
+        {{hash=2f76abb5e1247b916783d7df6348efe5}{%
+           family={Casallas},
+           familyi={C\bibinitperiod},
+           given={Juan\bibnamedelima Sebastián},
+           giveni={J\bibinitperiod\bibinitdelim S\bibinitperiod}}}%
+        {{hash=e87a5f2d7fcc4c15f707b2a0696b969a}{%
+           family={Lawrence},
+           familyi={L\bibinitperiod},
+           given={Mike},
+           giveni={M\bibinitperiod}}}%
+        {{hash=f2d5fbb1c66cd65dcea7389842cbfa13}{%
+           family={Bloniarz},
+           familyi={B\bibinitperiod},
+           given={Brian},
+           giveni={B\bibinitperiod}}}%
+        {{hash=89c1c832adac03fb0cb933147ee65218}{%
+           family={Waterland},
+           familyi={W\bibinitperiod},
+           given={Amos},
+           giveni={A\bibinitperiod}}}%
+      }
+      \list{publisher}{1}{%
+        {Zenodo}%
+      }
+      \strng{namehash}{635d9afdbadaa4ffef3617fa334fe0f1}
+      \strng{fullhash}{3602ae9bd8f71a3917d8f37e0c29ea17}
+      \strng{bibnamehash}{635d9afdbadaa4ffef3617fa334fe0f1}
+      \strng{authorbibnamehash}{635d9afdbadaa4ffef3617fa334fe0f1}
+      \strng{authornamehash}{635d9afdbadaa4ffef3617fa334fe0f1}
+      \strng{authorfullhash}{3602ae9bd8f71a3917d8f37e0c29ea17}
+      \field{sortinit}{L}
+      \field{sortinithash}{7c47d417cecb1f4bd38d1825c427a61a}
+      \field{labelnamesource}{author}
+      \field{labeltitlesource}{title}
+      \field{month}{12}
+      \field{title}{stan-dev/math: 2.17.1}
+      \field{version}{v2.17.1}
+      \field{year}{2017}
+      \verb{doi}
+      \verb 10.5281/zenodo.1101101
+      \endverb
+      \verb{urlraw}
+      \verb https://doi.org/10.5281/zenodo.1101101
+      \endverb
+      \verb{url}
+      \verb https://doi.org/10.5281/zenodo.1101101
+      \endverb
+    \endentry
     \entry{Linderman17}{inproceedings}{}
       \name{author}{6}{}{%
         {{hash=79fae04d846cd5ea144f7a8e4821387f}{%
@@ -200,7 +478,7 @@
            giveni={J\bibinitperiod}}}%
       }
       \list{publisher}{1}{%
-        {PMLR}%
+        {\textsc{pmlr}}%
       }
       \strng{namehash}{bc0391d92061579d0e57da12c45ee2ea}
       \strng{fullhash}{ad78cff8652e19c169eb93d30241fa6e}
