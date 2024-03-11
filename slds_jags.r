@@ -1,22 +1,25 @@
 library(rjags)
 library(ggplot2)
 
-data = read.csv("data/nascar/dataset.csv")
+# # Markov-like prosess, jumps one step either clockwise or anti-clockwise on unit circle
 # data = read.csv("data/dataset.csv")
-names(data) = c("x","y")
-
-
 # truez = c(1, sign(diff(atan2(data[,2],data[,1]))))
 # truez[truez==-1]=2
+
+
+data = read.csv("data/nascar/dataset.csv")
+names(data) = c("x","y")
+
+# # ground truth z, needed in most cases to get a good fit
 truez=rep(1, nrow(data))
 truez[data[,2]>0] = 2
 truez[data[,1]>4] = 3
 truez[data[,1]< -4] = 4
 
-
+# # subsample data if it's repetitive/too big
 subset = seq(1,nrow(data),200)
 
-
+# # scale data so minimum distance between points is 10, for a better fit
 scale = (sum(diff(as.matrix(data[subset,]))**2)/(nrow(data[subset,])-1))**0.5
 D=2
 K=4
@@ -49,8 +52,8 @@ chain <- coda.samples(mod , c("predx","predz"), n.iter=niter) # sample
 
 chain.df = as.data.frame(as.mcmc(chain))
 
-#print(chain2)
 
+# # retrieve the data from the chain
 results.list=list()
 for (i in 1:niter) {
  results.list[[i]]=list()
@@ -68,8 +71,9 @@ for (i in 1:niter) {
 }
 
 
-print(coda.samples(mod, c("Ab", "Q", "pi"), n.iter=1))
+print(coda.samples(mod, c("Ab", "Q", "pi"), n.iter=1)) #see an example result, to check numbers
 
+# # plot
 for (i in 1:niter) {
  plot(ggplot() + geom_point(aes(results.list[[i]]$x1, results.list[[i]]$x2, col=results.list[[i]]$z))+geom_path(aes(results.list[[i]]$x1, results.list[[i]]$x2)))
 }
