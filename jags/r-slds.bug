@@ -1,4 +1,6 @@
 model {
+    ## this version doesn't work yet, we have to find a way to define pisb without going out-of-bounds
+    
     
     # useful variables
     for (d in 1:D) {

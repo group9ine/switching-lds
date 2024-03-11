@@ -17,19 +17,18 @@ model {
     for (k in 1:K) { 
         Q[k,1:D,1:D] ~ dwish(Id, D)
         for (i in 1:D) { 
-            ## equivalent ot setting Sigma matrix to I
+            ## equivalent to setting matrix S to Identity in matrix-normal(Ab_mean,V kron S)
             V[k,i,1:(D+1),1:(D+1)] ~ dwish(Id2, D+1)
-            #Ab[k,1:(D+1),i] ~ dmnorm(Od, V[k,i,,])
             Ab[k,1:(D+1),i] ~ dmnorm(Ab_mean[,i], V[k,i,,])
         }
         
         pi[k,1:K] ~ ddirch(a)
-        #pi[k,1:K] ~ dbeta(1,1)
+        #pi[k,1:K] ~ dbeta(1,1) #used if K==1
     }
     p ~ ddirch(a)
     #p ~ dbeta(1,1)
+    
     z[1] ~ dcat(p)
-    #x[1,1:D] <- x0
     
     # update rules
     for (t in 2:T) { 
@@ -41,6 +40,11 @@ model {
     # final prediction for trajectory continuation
     predz[1] ~ dcat(pi[z[T],])
     predx[1,1:D] ~ dmnorm(Ab[predz[1],1:D,] %*% x[T,1:D] + Ab[predz[1],D+1,], Q[predz[1],,]) 
+    
+    ## if we wanted to start from the same point as the original data we could use
+    # predz[1] <- z[1]
+    # predx[1,1:D] <- x[1,1:D]
+    
     for (t in 2:T) {
         predz[t] ~ dcat(pi[predz[t-1],])
         predx[t,1:D] ~ dmnorm(Ab[predz[t],1:D,] %*% predx[t-1,1:D] + Ab[predz[t],D+1,], Q[predz[t],,]) 

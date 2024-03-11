@@ -8,7 +8,7 @@ theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 # synthetic nascar dataset
 period <- 10
 dt <- 2 / period
-z <- rep(1:4, each = period, times = 12)
+z <- rep(1:4, each = period, times = 10)
 
 theta <- pi / period  # dtheta in the curves
 # 2D rotation matrix generating function
@@ -88,7 +88,7 @@ data_list <- list(
 
 fit <- sampling(
   sm, data = data_list,
-  chains = 6, iter = 2000, warmup = 1000
+  chains = 1, iter = 1500, warmup = 1000
 )
 
 params <- as.data.frame(extract(fit, permuted = FALSE))
