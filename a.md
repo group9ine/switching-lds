@@ -1,18 +1,8 @@
----
-author:
-- D. Bacilieri, L. Barbiero, G. Bordin, A. Pitteri
-bibliography: doc/tex/refs.bib
-date: 2024-03-11
-title: |
-  Bayesian Inference for Switching Linear Dynamical Systems
----
-
 # Model description
 
 A switching linear dynamical system -- also known as *switching state
-space model* -- is defined, borrowing the notation from
-`\textcite{Linderman17}`{=latex}, by the set of discrete-time stochastic
-equations $$\begin{aligned}
+space model* -- is defined, borrowing the notation from @Linderman17, by
+the set of discrete-time stochastic equations $$\begin{aligned}
   x_{t} &= A_{z_{t}} x_{t - 1} + b_{z_{t}} + v_{t}, \\
   y_{t} &= C_{z_{t}} x_{t} + d_{z_{t}} + w_{t},
 \end{aligned}$$ where $v_{t} \in \R^{M}$ and $w_{t} \in \R^{N}$ are
@@ -49,11 +39,10 @@ transition matrix.
 # Model implementation
 
 To set up a Monte Carlo sampling scheme, we chose to work with the Stan
-`\autocite{Stan24}`{=latex} programming language and its implementation
-in R through the package [rstan]{.sans-serif}
-`\autocite{RStan24}`{=latex}. Sampling in Stan is done by default using
-a variant of the Hamiltonian Monte Carlo scheme called "No-U-Turn
-sampler" or `\autocite{Carpenter17}`{=latex}.
+[@Stan24] programming language and its implementation in R through the
+package [rstan]{.sans-serif} [@RStan24]. Sampling in Stan is done by
+default using a variant of the Hamiltonian Monte Carlo scheme called
+"No-U-Turn sampler" or [@Carpenter17].
 
 The model cannot be implemented directly as it is, in the sense of
 specifying a categorical likelihood for the transition
@@ -65,7 +54,7 @@ strategy -- known in the literature as *forward algorithm* -- is more
 efficient than the straightforward implementation in sampling
 low-probability states, and is commonly used in similar inference
 problems involving hidden Markov models or other state space models
-`\autocite{Damiano2018}`{=latex}.
+[@Damiano2018].
 
 ## The forward algorithm {#sec:forward-algorithm}
 
@@ -118,9 +107,8 @@ $x_{1}$ and $z_{1}$. We chose a multivariate Gaussian for the first and
 a uniform distribution over the $K$ states for the second.
 
 At this point, we also need the prior distributions for the dynamical
-parameters. Following the suggestion from
-`\textcite{Linderman17}`{=latex}, we chose matrix-normal-inverse-Wishart
-priors: $$\begin{aligned}
+parameters. Following the suggestion from @Linderman17, we chose
+matrix-normal-inverse-Wishart priors: $$\begin{aligned}
   (A_{k}, b_{k}), Q_{k} &\sim \MNIW(M_{x}, \Omega_{x}, \Psi_{x}, \nu_{x}) \\
   (C_{k}, d_{k}), S_{k} &\sim \MNIW(M_{y}, \Omega_{y}, \Psi_{y}, \nu_{y}).
 \end{aligned}$$ Here $M_{x} \in \R^{M \times (M + 1)}$ and
@@ -135,12 +123,12 @@ split between the matrices $A_{k}$ and $C_{k}$ and their corresponding
 bias vectors $b_{k}$ and $d_{k}$.
 
 At the time of writing, Stan has not yet implemented a matrix normal
-distribution function `\autocite{Lee17}`{=latex}. Therefore, we have
-resorted to implementing it by defining the logarithm of the probability
-density. The explicit form of the matrix normal distribution with
-parameters $M \in \R^{p
+distribution function [@Lee17]. Therefore, we have resorted to
+implementing it by defining the logarithm of the probability density.
+The explicit form of the matrix normal distribution with parameters
+$M \in \R^{p
 \times q}$, $\Sigma \in \R^{p \times p}$, $\Omega \in \R^{q \times q}$
-is `\autocite{DeWaal06}`{=latex} $$\begin{gathered}
+is [@DeWaal06] $$\begin{gathered}
   p(X \given M, \Sigma, \Omega) =
     \frac{1}{(2 \pi)^{pq/2} \abs{\Omega}^{p/2} \abs{\Sigma}^{q/2}} \\
     \cdot \exp\left\{-\frac{1}{2}\tr\left[\Omega^{-1} (X - M)^\tran
@@ -153,9 +141,8 @@ Since we marginalize out the $z$ sequence during the sampling procedure,
 we need a way to recover them probabilistically. One way to do it is to
 search *a posteriori* for the most likely hidden sequence of $z$ states
 conditioned to the observed $y_{1:T}$ and inferred $x_{1:T}$. This is
-done through the so-called "Viterbi algorithm"
-`\autocite{Stan24}`{=latex}, which is based on a recursive relation much
-like the forward algorithm.
+done through the so-called "Viterbi algorithm" [@Stan24], which is based
+on a recursive relation much like the forward algorithm.
 
 Indeed, consider the quantity $$\eta_{t}(k) \coloneq \argmax_{z_{1:t-1}}
     p(z_{1:t-1}, z_{t} = k, x_{1:t}, y_{1:t}).$$ If we proceed similarly
@@ -188,28 +175,25 @@ replacing summation.
 # Adding recursion
 
 A possible improvement over the standard model is the one proposed by
-`\textcite{Barber06}`{=latex}, referred to by
-`\textcite{Linderman17}`{=latex} as *recurrent* . The recursivity here
-consists in adding a link between the current discrete hidden state
+@Barber06, referred to by @Linderman17 as *recurrent* . The recursivity
+here consists in adding a link between the current discrete hidden state
 $z_{t}$ and the continuous hidden state at the previous time step
 $x_{t-1}$. In this way the regime switching can have a non-Markovian
 dependence on the continuous latent state, greatly enhancing the
 descriptive power in situations where there is strong multi-time step
 correlation in the linear dynamics.
 
-To model the connection $z_{t} \given x_{t-1}$,
-`\textcite{Linderman17}`{=latex} propose a linear transformation
-combined with a stick-breaking process to construct a vector
-$\pi_{z_{t}}$ of transition probabilities. Specifically, let
-$\nu_{t} \in
+To model the connection $z_{t} \given x_{t-1}$, @Linderman17 propose a
+linear transformation combined with a stick-breaking process to
+construct a vector $\pi_{z_{t}}$ of transition probabilities.
+Specifically, let $\nu_{t} \in
 \R^{K-1}$, defined by $$\nu_{t} = R_{z_{t-1}} x_{t-1} + r_{z_{t-1}},$$
 where $R_{k} \in \R^{K-1 \times M}$ and $r_{k} \in \R^{K-1}$. The
 relative magnitudes of the matrix $R$ and the bias vector $r$ control
 the weight given to the recursive influence ($R$) compared to the pure
-Markov dynamics between the $z$ states ($r$)
-`\autocite{Linderman17}`{=latex}. The transition probabilities of
-$z_{t}$ conditioned to $x_{t-1}$ are then given by
-$$z_{t} \given x_{t-1} \sim \pi_{\mathrm{SB}}(\nu_{t}),
+Markov dynamics between the $z$ states ($r$) [@Linderman17]. The
+transition probabilities of $z_{t}$ conditioned to $x_{t-1}$ are then
+given by $$z_{t} \given x_{t-1} \sim \pi_{\mathrm{SB}}(\nu_{t}),
   \label{eq:nu-xtm1}$$ where
 $\pi_{\mathrm{SB}} \colon \R^{K-1} \to [0,1]^{K}$ is the stick-breaking
 function, mapping the vector $\nu_{t}$ to a normalized probability
