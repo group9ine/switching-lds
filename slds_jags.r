@@ -30,7 +30,7 @@ mod_data$x=data[subset,]*10/scale
 mod_data$T=nrow(mod_data$x)
 mod_data$K=K
 mod_data$D=D
-mod_data$z=truez[subset]
+#mod_data$z=truez[subset]
 #mod_data$bscale=bscale
 #mod_data$x0=mod_data$x[1,]
 
@@ -46,7 +46,7 @@ plot(ggplot(data[subset,]) +geom_point(aes(x, y, col=as.factor(truez[subset]))))
 mod <- jags.model("jags/r-slds.bug", mod_data)
 
 
-update(mod, 10000) # burn-in
+update(mod, 30000) # burn-in
 
 chain <- coda.samples(mod , c("predx","predz"), n.iter=niter) # sample
 
@@ -71,10 +71,16 @@ for (i in 1:niter) {
 }
 
 
-print(coda.samples(mod, c("Ab", "Q", "pi"), n.iter=1)) #see an example result, to check numbers
+#print(coda.samples(mod, c("Ab", "Q", "pi"), n.iter=1)) #see an example result, to check numbers
+print(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=1))
 
 # # plot
 for (i in 1:niter) {
  plot(ggplot() + geom_point(aes(results.list[[i]]$x1, results.list[[i]]$x2, col=results.list[[i]]$z))+geom_path(aes(results.list[[i]]$x1, results.list[[i]]$x2)))
 }
+
+library(data.table)
+as.data.table(as.mcmc(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=10000))) |> fwrite("parameters.csv")
+
+
 print("Done")

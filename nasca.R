@@ -96,8 +96,8 @@ setDT(params)
 params[, grep("chain:[^1]|log_|lp", names(params)) := NULL]
 names(params) <- gsub("chain:1.", "", names(params), fixed = TRUE)
 
-runmean <- sapply(seq_len(nrow(params)), \(n) mean(log(params$`pi[2,1]`[1:n])))
-plot(runmean, type = "l")
+# runmean <- sapply(seq_len(nrow(params)), \(n) mean(log(params$`pi[2,1]`[1:n])))
+# plot(runmean, type = "l")
 
 divergent <- get_sampler_params(fit, inc_warmup = FALSE)[[1]][, "divergent__"]
 sum(divergent) / length(divergent)

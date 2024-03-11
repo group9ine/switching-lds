@@ -38,27 +38,35 @@ model {
     # update rules
     for (t in 2:T) { 
         nu[t,1:(K-1)] <- Rc[,1:D] %*% x[t-1,1:D] + Rc[,(D+1)]
-        for (k in 1:K) {
-            pisb[(t-1),k] <- ifelse(k>1, prod(plogis(-nu[t,1:(k-1)])), 1) * ifelse(k<K,plogis(nu[t,k]),1)
+        
+        pisb[(t-1),1] <- plogis(nu[t,1],0,1)
+        pl[t,1] <- plogis(-nu[t,1],0,1)
+        for (k in 2:(K-1)) {
+            pl[t,k] <- pl[t,k-1] * plogis(-nu[t,k],0,1)
+            pisb[(t-1),k] <- pl[t,k-1] * plogis(nu[t,k],0,1)
         }
+        pisb[(t-1),K] <- pl[t,K-1]
+        
         z[t] ~ dcat(pisb[t-1,])
         x[t,1:D] ~ dmnorm(Ab[z[t],1:D,] %*% x[t-1,1:D] + Ab[z[t],D+1,], Q[z[t],,]) 
         ## multivariate defined in terms of covariance matrix
     }
     
-    # final prediction for trajectory continuation
-    prednu[1,1:(K-1)] <- Rc[,1:D] %*% x[T,1:D] + Rc[,(D+1)]
-    for (k in 1:K) {
-        predpisb[1,k] <- ifelse(k>1, prod(plogis(-prednu[1,1:(k-1)])), 1) * ifelse(k<K,plogis(prednu[1,k]),1)
-    }
+    # prediction with same starting point and status
     
-    predz[1] ~ dcat(predpisb[1,])
-    predx[1,1:D] ~ dmnorm(Ab[predz[1],1:D,] %*% x[T,1:D] + Ab[predz[1],D+1,], Q[predz[1],,]) 
+    predz[1] <- z[1]
+    predx[1,1:D] <- x[1,1:D]
+    
     for (t in 2:T) {
         prednu[t,1:(K-1)] <- Rc[,1:D] %*% predx[t-1,1:D] + Rc[,(D+1)]
-        for (k in 1:K) {
-            predpisb[t,k] <-  ifelse(k<K,plogis(prednu[t,k]),1) * ifelse(k>1, prod(plogis(-prednu[t,1:(k-1)])), 1)
+        predpisb[(t-1),1] <- plogis(prednu[t,1],0,1)
+        predpl[t,1] <- plogis(-prednu[t,1],0,1)
+        for (k in 2:(K-1)) {
+            predpl[t,k] <- predpl[t,k-1] * plogis(-prednu[t,k],0,1)
+            predpisb[(t-1),k] <- predpl[t,k-1] * plogis(prednu[t,k],0,1)
         }
+        predpisb[(t-1),K] <- predpl[t,K-1]
+        
         predz[t] ~ dcat(predpisb[(t-1),])
         predx[t,1:D] ~ dmnorm(Ab[predz[t],1:D,] %*% predx[t-1,1:D] + Ab[predz[t],D+1,], Q[predz[t],,]) 
     }
