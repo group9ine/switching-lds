@@ -94,15 +94,16 @@ if (cmd_inst) {
   fit$save_object(file = "out/pacman_fit.rds")
 } else {
   sm <- stan_model(
-  file = "stan/r-slds.stan",
-  model_name = "SLDS",
-  allow_optimizations = TRUE
+    file = "stan/r-slds.stan",
+    model_name = "SLDS",
+    allow_optimizations = TRUE
+  )
 
   fit <- sampling(
     sm, data = data_list,
     chains = 1, iter = 1500, warmup = 1000
   )
-)
+}
 
 draws <- fit$draws(format = "df") |> as.data.table()
 names(draws) <- gsub("[.]|__", "", names(draws))
