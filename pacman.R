@@ -55,6 +55,7 @@ setnames(pacman, c("x", "y"))
 
 # rescale to avoid numerical issues
 sc_fct <- 10 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+sc_fct <- 1
 pacman <- pacman * sc_fct
 
 ggplot(pacman, aes(x, y)) +
@@ -64,12 +65,15 @@ ggplot(pacman, aes(x, y)) +
 # set up data and priors
 data_list <- list(
   K = 3, N = 2, T = nrow(pacman), y = as.matrix(pacman),
-  Mu_y = list(
-    cbind(diag(1, 2), sc_fct * c(dt, dt)),
-    A(2),
-    cbind(diag(1, 2), -sc_fct * c(dt, dt))
-  ),
-  Mu_r = rep(list(matrix(1, nrow = 2, ncol = 3)), 3)
+  Mu_A = list(diag(1, 2), rot(theta), diag(1, 2)),
+  lambda_A = 2, kappa_A = 0.2,
+  mu_b = list(sc_fct * c(dt, dt), c(0, 0), sc_fct * c(-dt, dt)),
+  lambda_b = 0.5, kappa_b = 0.05,
+  lambda_Q = 2, kappa_Q = 1,
+  Mu_R = rep(list(diag(1, 2)), 3),
+  lambda_R = 2, kappa_R = 2,
+  mu_r = rep(list(c(1, 1)), 3),
+  lambda_r = 2, kappa_r = 2
 )
 
 if (cmd_inst) {
