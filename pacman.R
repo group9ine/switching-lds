@@ -100,10 +100,12 @@ if (cmd_inst) {
     model_name = "SLDS",
     allow_optimizations = TRUE
   )
+}
 
+if (!cmd_inst){
   fit <- sampling(
     sm, data = data_list,
-    chains = 1, iter = 1500, warmup = 1000
+    chains = 4, iter = 2000, warmup = 1000
   )
 }
 
