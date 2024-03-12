@@ -67,27 +67,13 @@ mod$compile(cpp_options = list(
 
 # set up data and priors
 data_list <- list(
-  K = 3,  # number of hidden states
-  N = 2,  # dimension of observed data
-  T = nrow(pacman),
-  y = as.matrix(pacman),
-  # MNW parameters for A, b, Q prior
-  Mu = list(
+  K = 3, N = 2, T = nrow(pacman), y = as.matrix(pacman),
+  Mu_y = list(
     cbind(diag(1, 2), sc_fct * c(dt, dt)),
     A(2),
     cbind(diag(1, 2), -sc_fct * c(dt, dt))
   ),
-  Omega = rep(list(diag(1, 3)), 3),  # diagonal precision matrix
-  # The exp. value of the Wishart distribution is nu * Psi,
-  # so we're setting E[Q] = diag(1, 2) with these values.
-  # A lower nu gives a more homogenous distribution
-  Psi = rep(list(diag(0.5, 2)), 3),
-  nu = rep(2, 3),
-  # MN parameters for R, r prior
-  # without better intuition, pick something uniform
-  Mu_r = rep(list(matrix(1, nrow = 2, ncol = 3)), 3),
-  Sigma_r = rep(list(diag(1, 2)), 3),
-  Omega_r = rep(list(diag(1, 3)), 3)
+  Mu_r = rep(list(matrix(1, nrow = 2, ncol = 3)), 3)
 )
 
 fit <- mod$sample(
