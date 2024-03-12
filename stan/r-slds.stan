@@ -73,20 +73,20 @@ transformed parameters {
   array[K] vector<lower=0>[N] sigma_r;
 
   for (k in 1:K) {
-    A[k] = Mu_A[k] + diag_pre_multiply(sigma_A[k], L_A[k]) * Z_A[k];
     sigma_A[k] = kappa_A * tan(sigma_A_unif[k]);
+    A[k] = Mu_A[k] + diag_pre_multiply(sigma_A[k], L_A[k]) * Z_A[k];
 
-    b[k] = mu_b[k] + diag_pre_multiply(sigma_b[k], L_b[k]) * z_b[k];
     sigma_b[k] = kappa_b * tan(sigma_b_unif[k]);
+    b[k] = mu_b[k] + diag_pre_multiply(sigma_b[k], L_b[k]) * z_b[k];
 
-    Q[k] = diag_pre_multiply(sigma_Q[k], L_Q[k]);
     sigma_Q[k] = kappa_Q * tan(sigma_Q_unif[k]);
+    Q[k] = diag_pre_multiply(sigma_Q[k], L_Q[k]);
 
-    R[k] = Mu_R[k] + diag_pre_multiply(sigma_R[k], L_R[k]) * Z_R[k];
     sigma_R[k] = kappa_R * tan(sigma_R_unif[k]);
+    R[k] = Mu_R[k] + diag_pre_multiply(sigma_R[k], L_R[k]) * Z_R[k];
 
-    r[k] = mu_r[k] + diag_pre_multiply(sigma_r[k], L_r[k]) * z_r[k];
     sigma_r[k] = kappa_r * tan(sigma_r_unif[k]);
+    r[k] = mu_r[k] + diag_pre_multiply(sigma_r[k], L_r[k]) * z_r[k];
   }
 }
 
