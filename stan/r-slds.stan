@@ -95,7 +95,7 @@ model {
     to_vector(Z_A[k]) ~ std_normal();
     L_A[k] ~ lkj_corr_cholesky(lambda_A);
 
-    to_vector(z_b[k]) ~ std_normal();
+    z_b[k] ~ std_normal();
     L_b[k] ~ lkj_corr_cholesky(lambda_b);
 
     L_Q[k] ~ lkj_corr_cholesky(lambda_Q);
@@ -103,7 +103,7 @@ model {
     to_vector(Z_R[k]) ~ std_normal();
     L_R[k] ~ lkj_corr_cholesky(lambda_R);
 
-    to_vector(z_r[k]) ~ std_normal();
+    z_r[k] ~ std_normal();
     L_r[k] ~ lkj_corr_cholesky(lambda_r);
   }
 
