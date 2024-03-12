@@ -20,91 +20,60 @@ data {
   array[T] vector[N] y;
 
   array[K] matrix[N, N] Mu_A;
-  real lambda_A;
-  real kappa_A;
+  array[K] cholesky_factor_cov[N] Sigma_A;
 
   array[K] vector[N] mu_b;
-  real lambda_b;
-  real kappa_b;
+  array[K] cholesky_factor_cov[N] Sigma_b;
 
   real lambda_Q;
   real kappa_Q;
 
   array[K] matrix[K - 1, N] Mu_R;
-  real lambda_R;
-  real kappa_R;
-
   array[K] vector[K - 1] mu_r;
-  real lambda_r;
-  real kappa_r;
 }
 
 parameters {
   array[K] matrix[N, N] Z_A;
-  array[K] cholesky_factor_corr[N] L_A;
-  array[K] vector<lower=0, upper=pi() / 2>[N] sigma_A_unif;
-
   array[K] vector[N] z_b;
-  array[K] cholesky_factor_corr[N] L_b;
-  array[K] vector<lower=0, upper=pi() / 2>[N] sigma_b_unif;
 
   array[K] cholesky_factor_corr[N] L_Q;
   array[K] vector<lower=0, upper=pi() / 2>[N] sigma_Q_unif;
 
   array[K] matrix[K - 1, N] Z_R;
-  array[K] cholesky_factor_corr[K - 1] L_R;
-  array[K] vector<lower=0, upper=pi() / 2>[K - 1] sigma_R_unif;
-
   array[K] vector[K - 1] z_r;
-  array[K] cholesky_factor_corr[K - 1] L_r;
-  array[K] vector<lower=0, upper=pi() / 2>[K - 1] sigma_r_unif;
 }
 
 transformed parameters {
   array[K] matrix[N, N] A;
-  array[K] vector<lower=0>[N] sigma_A;
   array[K] vector[N] b;
-  array[K] vector<lower=0>[N] sigma_b;
+
   array[K] cholesky_factor_cov[N] Q;
   array[K] vector<lower=0>[N] sigma_Q;
+
   array[K] matrix[K - 1, N] R;
-  array[K] vector<lower=0>[N] sigma_R;
   array[K] vector[K - 1] r;
-  array[K] vector<lower=0>[N] sigma_r;
 
   for (k in 1:K) {
-    sigma_A[k] = kappa_A * tan(sigma_A_unif[k]);
-    A[k] = Mu_A[k] + diag_pre_multiply(sigma_A[k], L_A[k]) * Z_A[k];
-
-    sigma_b[k] = kappa_b * tan(sigma_b_unif[k]);
-    b[k] = mu_b[k] + diag_pre_multiply(sigma_b[k], L_b[k]) * z_b[k];
+    A[k] = Mu_A[k] + Sigma_A[k] * Z_A[k];
+    b[k] = mu_b[k] + Sigma_b[k] * z_b[k];
 
     sigma_Q[k] = kappa_Q * tan(sigma_Q_unif[k]);
     Q[k] = diag_pre_multiply(sigma_Q[k], L_Q[k]);
 
-    sigma_R[k] = kappa_R * tan(sigma_R_unif[k]);
-    R[k] = Mu_R[k] + diag_pre_multiply(sigma_R[k], L_R[k]) * Z_R[k];
-
-    sigma_r[k] = kappa_r * tan(sigma_r_unif[k]);
-    r[k] = mu_r[k] + diag_pre_multiply(sigma_r[k], L_r[k]) * z_r[k];
+    R[k] = Mu_R[k] + Z_R[k];
+    r[k] = mu_r[k] + z_r[k];
   }
 }
 
 model {
   for (k in 1:K) {
     to_vector(Z_A[k]) ~ std_normal();
-    L_A[k] ~ lkj_corr_cholesky(lambda_A);
-
     z_b[k] ~ std_normal();
-    L_b[k] ~ lkj_corr_cholesky(lambda_b);
 
     L_Q[k] ~ lkj_corr_cholesky(lambda_Q);
 
     to_vector(Z_R[k]) ~ std_normal();
-    L_R[k] ~ lkj_corr_cholesky(lambda_R);
-
     z_r[k] ~ std_normal();
-    L_r[k] ~ lkj_corr_cholesky(lambda_r);
   }
 
   array[T] vector[K] log_pk;
