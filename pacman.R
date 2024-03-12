@@ -54,8 +54,8 @@ pacman <- data.table(t(x))
 setnames(pacman, c("x", "y"))
 
 # rescale to avoid numerical issues
-sc_fct <- 10 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
-sc_fct <- 1
+sc_fct <- 100 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+#sc_fct <- 1
 pacman <- pacman * sc_fct
 
 ggplot(pacman, aes(x, y)) +
@@ -66,19 +66,17 @@ ggplot(pacman, aes(x, y)) +
 data_list <- list(
   K = 3, N = 2, T = nrow(pacman), y = as.matrix(pacman),
   Mu_A = list(diag(1, 2), rot(theta), diag(1, 2)),
-  lambda_A = 2, kappa_A = 0.2,
+  Sigma_A = rep(list(diag(0.5, 2)), 3),
   mu_b = list(sc_fct * c(dt, dt), c(0, 0), sc_fct * c(-dt, dt)),
-  lambda_b = 0.5, kappa_b = 0.05,
-  lambda_Q = 2, kappa_Q = 1,
+  Sigma_b = rep(list(diag(10, 2)), 3),
+  lambda_Q = 1, kappa_Q = 0.1, 
   Mu_R = rep(list(diag(1, 2)), 3),
-  lambda_R = 2, kappa_R = 2,
-  mu_r = rep(list(c(1, 1)), 3),
-  lambda_r = 2, kappa_r = 2
+  mu_r = rep(list(c(1, 1)), 3)
 )
 
 if (cmd_inst) {
   # compile the rSLDS model
-  mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
+  mod <- cmdstan_model("stan/r-slds-simp.stan", compile = FALSE)
   mod$check_syntax(pedantic = TRUE)
   mod$compile(cpp_options = list(
     stan_cpp_optims = FALSE,
@@ -123,6 +121,8 @@ ggplot(z_star, aes(iter, z)) +
   geom_point() +
   facet_wrap(vars(chain), nrow = 2)
 
-par_name("A.3") |>
+par_name("^A.2") |>
   fit$draws() |>
-  bayesplot::mcmc_hist_by_chain()
+  bayesplot::mcmc_hist()
+
+par_name("^b.2") |> fit$draws() |> bayesplot::mcmc_hist_by_chain()
