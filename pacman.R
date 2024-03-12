@@ -1,6 +1,10 @@
 library(data.table)
 library(ggplot2)
-library(cmdstanr)
+cmd_inst <- require(cmdstanr)
+if (!cmd_inst) {
+  library(rstan)
+  rstan_options(auto_write = TRUE)
+}
 options(mc.cores = 2)
 theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 
@@ -57,14 +61,6 @@ ggplot(pacman, aes(x, y)) +
   geom_path(colour = "steelblue") +
   geom_point(data = \(x) x[1], colour = "firebrick", size = 3)
 
-# compile the rSLDS model
-mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
-mod$check_syntax(pedantic = TRUE)
-mod$compile(cpp_options = list(
-  stan_cpp_optims = FALSE,
-  stan_no_range_checks = FALSE
-))
-
 # set up data and priors
 data_list <- list(
   K = 3, N = 2, T = nrow(pacman), y = as.matrix(pacman),
@@ -76,17 +72,37 @@ data_list <- list(
   Mu_r = rep(list(matrix(1, nrow = 2, ncol = 3)), 3)
 )
 
-fit <- mod$sample(
-  data = data_list,
-  output_dir = "out",
-  chains = 2,
-  iter_warmup = 1000,
-  iter_sampling = 2000,
-  show_exceptions = TRUE
-)
+if (cmd_inst) {
+  # compile the rSLDS model
+  mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
+  mod$check_syntax(pedantic = TRUE)
+  mod$compile(cpp_options = list(
+    stan_cpp_optims = FALSE,
+    stan_no_range_checks = FALSE
+  ))
 
-# save results to file
-fit$save_object(file = "out/pacman_fit.rds")
+  fit <- mod$sample(
+    data = data_list,
+    output_dir = "out",
+    chains = 2,
+    iter_warmup = 1000,
+    iter_sampling = 2000,
+    show_exceptions = TRUE
+  )
+
+  # save results to file
+  fit$save_object(file = "out/pacman_fit.rds")
+} else {
+  sm <- stan_model(
+  file = "stan/r-slds.stan",
+  model_name = "SLDS",
+  allow_optimizations = TRUE
+
+  fit <- sampling(
+    sm, data = data_list,
+    chains = 1, iter = 1500, warmup = 1000
+  )
+)
 
 draws <- fit$draws(format = "df") |> as.data.table()
 names(draws) <- gsub("[.]|__", "", names(draws))
