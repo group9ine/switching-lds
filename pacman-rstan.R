@@ -84,7 +84,8 @@ pacman_fit <- sampling(
 )
 
 # ANALYSIS OF THE FIT
-params <- as.data.frame(extract(fit, permuted = FALSE))
+loaded_fit_pacman_long <- readRDS('fit_pacman-long.rds')
+params <- as.data.frame(extract(loaded_fit_pacman_long, permuted = FALSE))
 setDT(params)
 names(params) <- gsub("chain:[0-9].", "", names(params))
 
@@ -104,7 +105,22 @@ par_name <- \(pattern) names(params)[grep(pattern, names(params))]
 
 par_name("^z_star")
 
-par_name("^b\\[3.") |> plot_par()
+for(i in 1:3){
+  for(j in 1:2){
+    for(k in 1:2){
+      p <- par_name(paste("^Q\\[",i,",",j,",",k,"]", sep="")) |> plot_par()
+      ggsave(paste("pacman-plots/Q[",i,",",j,",",k,"]",".png", sep=""), p)
+    }
+  }
+}
+
+for(i in 1:3){
+  for(j in 1:2){
+    p <- par_name(paste("^b\\[",i,",",j,"]", sep="")) |> plot_par()
+    ggsave(paste("pacman-plots/b[",i,",",j,"]",".png", sep=""), p)
+  }
+}
+par_name("^A\\[2,1,1]") |> plot_par()
 
 par_name("pi.1") |> plot_par()
 

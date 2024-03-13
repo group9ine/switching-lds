@@ -30,11 +30,11 @@ data {
   real lambda_Q;
   real kappa_Q;
 
-  array[K] matrix[K - 1, N] Mu_R;
+  matrix[K - 1, N] Mu_R;
   real lambda_R;
   real kappa_R;
 
-  array[K] vector[K - 1] mu_r;
+  vector[K - 1] mu_r;
   real lambda_r;
   real kappa_r;
 }
@@ -67,10 +67,10 @@ transformed parameters {
   array[K] vector<lower=0>[N] sigma_b;
   array[K] cholesky_factor_cov[N] Q;
   array[K] vector<lower=0>[N] sigma_Q;
-  array[K] matrix[K - 1, N] R;
-  array[K] vector<lower=0>[N] sigma_R;
-  array[K] vector[K - 1] r;
-  array[K] vector<lower=0>[N] sigma_r;
+  matrix[K - 1, N] R;
+  vector<lower=0>[N] sigma_R;
+  vector[K - 1] r;
+  vector<lower=0>[N] sigma_r;
 
   for (k in 1:K) {
     sigma_A[k] = kappa_A * tan(sigma_A_unif[k]);
@@ -81,13 +81,13 @@ transformed parameters {
 
     sigma_Q[k] = kappa_Q * tan(sigma_Q_unif[k]);
     Q[k] = diag_pre_multiply(sigma_Q[k], L_Q[k]);
-
-    sigma_R[k] = kappa_R * tan(sigma_R_unif[k]);
-    R[k] = Mu_R[k] + diag_pre_multiply(sigma_R[k], L_R[k]) * Z_R[k];
-
-    sigma_r[k] = kappa_r * tan(sigma_r_unif[k]);
-    r[k] = mu_r[k] + diag_pre_multiply(sigma_r[k], L_r[k]) * z_r[k];
   }
+
+  sigma_R = kappa_R * tan(sigma_R_unif);
+  R = Mu_R + diag_pre_multiply(sigma_R, L_R) * Z_R;
+
+  sigma_r = kappa_r * tan(sigma_r_unif);
+  r = mu_r + diag_pre_multiply(sigma_r, L_r) * z_r;
 }
 
 model {
@@ -99,13 +99,13 @@ model {
     L_b[k] ~ lkj_corr_cholesky(lambda_b);
 
     L_Q[k] ~ lkj_corr_cholesky(lambda_Q);
-
-    to_vector(Z_R[k]) ~ std_normal();
-    L_R[k] ~ lkj_corr_cholesky(lambda_R);
-
-    z_r[k] ~ std_normal();
-    L_r[k] ~ lkj_corr_cholesky(lambda_r);
   }
+
+  to_vector(Z_R) ~ std_normal();
+  L_R ~ lkj_corr_cholesky(lambda_R);
+
+  z_r ~ std_normal();
+  L_r ~ lkj_corr_cholesky(lambda_r);
 
   array[T] vector[K] log_pk;
   log_pk[1] = rep_vector(-log(K), K);
@@ -113,7 +113,7 @@ model {
   for (t in 2:T) {
     for (k in 1:K) {
       log_pk[t, k] =
-        log_sum_exp(log_pk[t - 1] + log_p_sb(R[k] * y[t - 1] + r[k]))
+        log_sum_exp(log_pk[t - 1] + log_p_sb(R * y[t - 1] + r))
         + multi_normal_cholesky_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
@@ -137,7 +137,7 @@ generated quantities {
     for (t in 2:T) {
       for (k in 1:K) {
         max_over_zt = negative_infinity();
-        tmp = max_log_pk[t - 1] + log_p_sb(R[k] * y[t - 1] + r[k]);
+        tmp = max_log_pk[t - 1] + log_p_sb(R * y[t - 1] + r);
 
         for (j in 1:K) {
           if (tmp[j] > max_over_zt) {
