@@ -5,18 +5,18 @@ if (!cmd_inst) {
   library(rstan)
   rstan_options(auto_write = TRUE)
 }
-options(mc.cores = 2)
+options(mc.cores = 6)
 theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 
 # 2D rotation matrix generating function
 rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
-theta <- 0.1
+theta <- pi/10
 A <- \(z, t) if (z == 1) rot(t) else rot(-t)
 # gaussian noise matrix
 Q <- \(z) MASS::mvrnorm(1, mu = c(0, 0), Sigma = diag(1e-4, 2))
 
 # hidden state sequence
-z <- sample.int(2, size = 100, prob = c(0.7, 0.3), replace = TRUE)
+z <- rep(c(1,2), times = 20, each = 10)
 # generate the data
 x <- matrix(0, nrow = 2, ncol = length(z))
 x[, 1] <- c(1, 0)
@@ -44,12 +44,14 @@ ggplot(wind, aes(x, y)) +
 data_list <- list(
   K = 2, N = 2, T = nrow(wind), y = as.matrix(wind),
   Mu_A = list(A(1, theta), A(2, theta)),
-  Sigma_A = rep(list(diag(0.5, 2)), 2),
+  lambda_A = 2, kappa_A = 0.2,
   mu_b = rep(list(c(0, 0)), 2),
-  Sigma_b = rep(list(diag(1, 2)), 2),
+  lambda_b = 0.5, kappa_b = 0.05,
   lambda_Q = 2, kappa_Q = 2, 
-  Mu_R = rep(list(diag(1, 2)), 2),
-  mu_r = rep(list(c(1, 1)), 2)
+  Mu_R = rep(list(matrix(c(1,1), nrow=1)), 2),
+  lambda_R = 2, kappa_R = 2,
+  mu_r = rep(list(c(1)), 2),
+  lambda_r = 2, kappa_r = 2
 )
 
 if (cmd_inst) {
@@ -83,9 +85,12 @@ if (cmd_inst) {
 if (!cmd_inst){
   fit <- sampling(
     sm, data = data_list,
-    chains = 4, iter = 2000, warmup = 1000
+    chains = 6, iter = 2500, warmup = 1000
   )
 }
+
+saveRDS(fit, "fit-wind.rds")
+
 
 draws <- fit$draws(format = "df") |> as.data.table()
 names(draws) <- gsub("[.]|__", "", names(draws))

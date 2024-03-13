@@ -38,7 +38,7 @@ Q <- function(z) {
 }
 
 # hidden state sequence
-z <- rep(1:3, each = period, times = 10)
+z <- rep(1:3, each = period, times = 20)
 # generate the data
 x <- matrix(0, nrow = 2, ncol = length(z))
 x[, 1] <- c(0, 0)
@@ -104,9 +104,9 @@ if (cmd_inst) {
 }
 
 if (!cmd_inst){
-  fit <- sampling(
+  pacman_fit <- sampling(
     sm, data = data_list,
-    chains = 3, iter = 2500, warmup = 1000
+    chains = 4, iter = 2500, warmup = 1000
   )
 }
 
