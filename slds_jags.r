@@ -1,7 +1,7 @@
 library(rjags)
 library(ggplot2)
 
-# # Markov-like prosess, jumps one step either clockwise or anti-clockwise on unit circle
+# # Markov-like prosess, jumps one step either clockwise or counterclockwise on unit circle
 # data = read.csv("data/dataset.csv")
 # truez = c(1, sign(diff(atan2(data[,2],data[,1]))))
 # truez[truez==-1]=2
@@ -11,10 +11,10 @@ data = read.csv("data/nascar/dataset.csv")
 names(data) = c("x","y")
 
 # # ground truth z, needed in most cases to get a good fit
-truez=rep(1, nrow(data))
-truez[data[,2]>0] = 2
-truez[data[,1]>4] = 3
-truez[data[,1]< -4] = 4
+# truez=rep(1, nrow(data))
+# truez[data[,2]>0] = 2
+# truez[data[,1]>4] = 3
+# truez[data[,1]< -4] = 4
 
 # # subsample data if it's repetitive/too big
 subset = seq(1,nrow(data),200)
@@ -22,7 +22,7 @@ subset = seq(1,nrow(data),200)
 # # scale data so minimum distance between points is 10, for a better fit
 scale = (sum(diff(as.matrix(data[subset,]))**2)/(nrow(data[subset,])-1))**0.5
 D=2
-K=4
+K=10
 
 mod_data=NULL
 mod_data$x=data[subset,]*10/scale
@@ -40,13 +40,13 @@ T=mod_data$T
 niter=10
 
 
-plot(ggplot(data[subset,]) +geom_point(aes(x, y, col=as.factor(truez[subset])))) #see what the data is
+plot(ggplot(data[subset,]) +geom_point(aes(x, y)))#, col=as.factor(truez[subset])))) #see what the data is
 
 #mod <- jags.model("jags/slds.bug", mod_data)
 mod <- jags.model("jags/r-slds.bug", mod_data)
 
 
-update(mod, 30000) # burn-in
+update(mod, 100000) # burn-in
 
 chain <- coda.samples(mod , c("predx","predz"), n.iter=niter) # sample
 
@@ -80,7 +80,7 @@ for (i in 1:niter) {
 }
 
 library(data.table)
-as.data.table(as.mcmc(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=10000))) |> fwrite("parameters.csv")
+as.data.table(as.mcmc(coda.samples(mod, c("Ab", "Q", "Rc"), n.iter=10000))) |> fwrite("parameters_Monza.csv")
 
 
 print("Done")

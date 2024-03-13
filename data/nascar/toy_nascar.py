@@ -226,9 +226,9 @@ if __name__ == "__main__":
     T = 100000
     # data_a = accelerating_model(T)
     # data_a = advanced_model(T)
-    data_a = basic_model(T)
+    # data_a = basic_model(T)
     # data_a = just_a_square(1000)
-    # data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
+    data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
     
     with open("dataset.csv", "w") as f:
         for i in data_a:
@@ -240,7 +240,7 @@ if __name__ == "__main__":
     ax.plot(data_a[:, 1])
 
     plt.show()
-    """
+    
     x = np.linspace(min(data_a[:, 0]) - 0.1, max(data_a[:, 0]) + 0.1, 500)
     y = np.linspace(min(data_a[:, 1]) - 0.1, max(data_a[:, 1]) + 0.1, 500)
 
@@ -254,4 +254,4 @@ if __name__ == "__main__":
     plt.plot(data_a[:, 0], data_a[:, 1])
     plt.gca().set_aspect("equal")
     plt.show()
-    """
+    
