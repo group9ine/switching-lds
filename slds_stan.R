@@ -4,40 +4,39 @@ library(rstan)
 options(mc.cores = parallel::detectCores() - 2)
 rstan_options(auto_write = TRUE)
 
-nascar_full <- fread("data/nascar/dataset.csv", sep = ",")
-names(nascar_full) <- c("x", "y")
+# 2D rotation matrix generating function
+rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
+theta <- pi/10
+A <- \(z, t) if (z == 1) rot(t) else rot(-t)
+# gaussian noise matrix
+Q <- \(z) MASS::mvrnorm(1, mu = c(0, 0), Sigma = diag(1e-4, 2))
 
-# small subset
-nascar <- nascar_full[seq(1, 1e4, 100)]
-
-plot(nascar$x, nascar$y, type = "b")
-points(nascar[1, "x"], nascar[1, "y"], col = "red")
-
-# simpler data (triangle wave)
-period <- 15
-x <- seq(0, 50, length.out = 500)
-triangle <- \(x, period) 2 * abs((x %% period) - 0.5 * period) / period 
-trwv <- triangle(x, period) + rnorm(length(x), 0, 0.1) - 0.5
-
-plot(x, trwv, type = "b")
-
-# square wave
-generate_square_wave <- function(frequency, duration, sampling_rate) {
-  t <- seq(0, duration, by = 1/sampling_rate)
-  square_wave <- sign(sin(2 * pi * frequency * t))
-  return(square_wave)
+states <- c(1,2)
+# hidden state sequence
+z <- sample(states, size = 250, replace = T, prob = c(0.7, 0.3))
+# generate the data
+x <- matrix(0, nrow = 2, ncol = length(z))
+x[, 1] <- c(1, 0)
+for (j in seq(1, length(z) - 1)) {
+  x[, j + 1] <- A(z[j], theta) %*% x[, j]
+}
+# add noise only after having done all the linear transformations
+for (j in seq_along(z)) {
+  x[, j] <- x[, j] + Q(z[j])
 }
 
-frequency <- 8   # Frequency of the square wave in Hertz
-duration <- 5    # Duration of the square wave in seconds
-sampling_rate <- 100  # Sampling rate in Hz
+wind <- data.table(t(x))
+setnames(wind, c("x", "y"))
 
-square_wave <- generate_square_wave(frequency, duration, sampling_rate)
-square_wave <- square_wave + rnorm(length(square_wave),0,0.05)
+# rescale to avoid numerical issues
+sc_fct <- 1 / wind[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+#sc_fct <- 1
+wind <- wind * sc_fct
 
-plot(seq(0, duration, by = 1 / sampling_rate), square_wave, type = "l",
-     main = "Square Wave", xlab = "Time (s)", ylab = "Amplitude")
-length(square_wave)
+ggplot(wind, aes(x, y)) +
+  geom_path(colour = "steelblue") +
+  geom_point(data = \(x) x[1], colour = "firebrick", size = 3)
+
 
 # one layer model
 sm <- stan_model(
@@ -48,24 +47,34 @@ sm <- stan_model(
 
 fit <- sampling(
   sm, data = list(
-    K = 2, M = 1, N = 1, T = length(trwv),
-    y = matrix(trwv, ncol = 1),
-    Mu = list(matrix(c(1, -1), ncol = 2), matrix(c(-1, 1), ncol = 2)),
-    Omega = lapply(1:2, \(i) diag(1, 2)),
-    Psi = lapply(1:2, \(i) matrix(1)),
-    nu = c(1, 1)
+    K = 2, N = 2, T = length(wind$x),
+    y = wind,
+    Mu = list(matrix(c(1, 0.1, 0.1, 1, 1, 1), ncol = 3),
+              matrix(c(1, 0.1, 0.1, 1, 1, 1), ncol = 3)),
+    Omega = lapply(1:2, \(i) diag(1, 3)),
+    Psi = lapply(1:2, \(i) matrix(c(1, 0.1, 0.1, 1), ncol=2)),
+    nu = c(2, 2)
   ),
   chains = 2, iter = 2000
 )
 
-A <- extract(
-  fit, pars = c("A[1,1,1]", "A[2,1,1]"),
-  permuted = FALSE, inc_warmup = FALSE
-) |> as.data.table()
+for(j in 1:2){
+  for(k in 1:2){
+    A <- extract(
+      fit, pars = c(paste("A[1,",j,",",k,"]", sep=""), paste("A[2,",j,",",k,"]", sep="")),
+      permuted = FALSE, inc_warmup = FALSE
+    ) |> as.data.table()
+    
+    ggp <- ggplot(A, aes(value, fill = parameters)) +
+      geom_histogram(bins = 50, position = "identity", alpha = 0.5) +
+      facet_grid(rows = vars(chains))
 
-ggplot(A, aes(value, fill = parameters)) +
-  geom_histogram(bins = 50, position = "identity", alpha = 0.5) +
-  facet_grid(rows = vars(chains))
+    ggsave(paste("markov-wing-plots/A[*,",j,",",k,"]",".png", sep=""), ggp, width = 8, height = 5)
+  }
+}
+
+
+
 
 # x-y layers model
 sm_x <- stan_model(
