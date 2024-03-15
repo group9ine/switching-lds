@@ -1,14 +1,17 @@
 library(data.table)
 library(ggplot2)
-library(rstan)
+cmd_inst <- require(cmdstanr)
+if (!cmd_inst) {
+  library(rstan)
+  rstan_options(auto_write = TRUE)
+}
 options(mc.cores = 2)
-rstan_options(auto_write = TRUE)
 theme_set(theme_minimal(base_size = 18, base_family = "Source Serif 4"))
 
 # 2D rotation matrix generating function
 rot <- \(t) matrix(c(cos(t), sin(t), -sin(t), cos(t)), ncol = 2)
 
-period <- 20
+period <- 8
 dt <- 1 / period
 theta <- 1.5 * pi / period
 
@@ -35,7 +38,7 @@ Q <- function(z) {
 }
 
 # hidden state sequence
-z <- rep(1:3, each = period, times = 10)
+z <- rep(1:3, each = period, times = 8)
 # generate the data
 x <- matrix(0, nrow = 2, ncol = length(z))
 x[, 1] <- c(0, 0)
@@ -51,40 +54,57 @@ pacman <- data.table(t(x))
 setnames(pacman, c("x", "y"))
 
 # rescale to avoid numerical issues
-pacman <- pacman / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+#sc_fct <- 1 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+sc_fct <- 1
+pacman <- pacman * sc_fct
 
 ggplot(pacman, aes(x, y)) +
   geom_path(colour = "steelblue") +
   geom_point(data = \(x) x[1], colour = "firebrick", size = 3)
 
-sm <- stan_model(
-  file = "stan/r-slds.stan",
-  model_name = "SLDS",
-  allow_optimizations = TRUE
-)
-
 # set up data and priors
 data_list <- list(
-  K = 3,  # number of hidden states
-  N = 2,  # dimension of observed data
-  T = nrow(pacman),
-  y = as.matrix(pacman),
-  # MNW parameters for A, b, Q prior
-  Mu = list(A(1), A(2), A(3)),
-  Omega = rep(list(diag(1, 3)), 3),  # diagonal precision matrix
-  # The exp. value of the Wishart distribution is nu * Psi,
-  # so we're setting E[Q] = diag(1, 2) with these values.
-  # A lower nu gives a more homogenous distribution
-  Psi = rep(list(diag(0.5, 2)), 3),
-  nu = rep(2, 3),
-  # MN parameters for R, r prior
-  # without better intuition, pick something uniform
-  Mu_r = rep(list(matrix(1, nrow = 3, ncol = 3)), 3),
-  Sigma_r = rep(list(diag(1, 3)), 3),
-  Omega_r = rep(list(diag(1, 3)), 3)
+  K = 3, N = 2, T = nrow(pacman), y = as.matrix(pacman),
+  Mu_A = list(diag(1, 2), rot(theta), diag(1, 2)),
+  lambda_A = 2, kappa_A = 1,
+  mu_b = list(sc_fct * c(dt, dt), c(0, 0), sc_fct * c(-dt, dt)),
+  lambda_b = 1.5, kappa_b = 1,
+  lambda_Q = 2, kappa_Q = 1.5,
+  Mu_R = diag(1, 2),
+  lambda_R = 2, kappa_R = 2,
+  mu_r = c(1, 1),
+  lambda_r = 2, kappa_r = 2
 )
 
-fit <- sampling(
-  sm, data = data_list,
-  chains = 1, iter = 1500, warmup = 1000
-)
+if (cmd_inst) {
+  # compile the rSLDS model
+  mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
+  mod$check_syntax(pedantic = TRUE)
+  mod$compile(cpp_options = list(
+    stan_cpp_optims = FALSE,
+    stan_no_range_checks = FALSE
+  ))
+
+  fit <- mod$sample(
+    data = data_list,
+    output_dir = "out",
+    chains = 2,
+    iter_warmup = 1000,
+    iter_sampling = 2000,
+    show_exceptions = TRUE
+  )
+
+  # save results to file
+  fit$save_object(file = "out/pacman_fit.rds")
+} else {
+  sm <- stan_model(
+    file = "stan/r-slds.stan",
+    model_name = "SLDS",
+    allow_optimizations = TRUE
+  )
+
+  fit <- sampling(
+    sm, data = data_list,
+    chains = 4, iter = 2000, warmup = 1000
+  )
+}

@@ -1,136 +1,168 @@
 functions {
-  // returns the log-pdf of a matrix normal, with precision matrices
-  real matrix_normal_prec_lpdf(matrix X, matrix M, matrix U, matrix V) {
-    int N = rows(X);
-    int P = cols(X);
-    real lp = - N * P * log(2 * pi())
-              + N * log_determinant_spd(V)
-              + P * log_determinant_spd(U)
-              - trace_gen_quad_form(V, U, X - M);
-
-    return 0.5 * lp;
-  }
-
-  // returns log p_sb(k | nu)
-  // i.e. the k-th component of the stick-breaking function
-  vector logp_stick_break(vector nu) {
-    int K = size(nu) + 1;
-    real sum_denoms = 0.0;  // sum of log(1 + exp(nu_j))
-    vector[K] p;
+  vector log_p_sb(vector x) {
+    int K = size(x) + 1;
+    real sum_denoms = 0.0;
+    vector[K] log_p;
     for (k in 1:(K - 1)) {
-      sum_denoms += log1p_exp(nu[k]);
-      p[k] = nu[k] - sum_denoms;
+      sum_denoms += log1p_exp(x[k]);
+      log_p[k] = x[k] - sum_denoms;
     }
-    p[K] = -sum_denoms;
+    log_p[K] = -sum_denoms;
 
-    return p;
+    return log_p;
   }
 }
 
 data {
-  int<lower=1> K;  // number of hidden states
-  int<lower=1> N;  // number of observed features
-  int<lower=1> T;  // length of the time series
+  int K;
+  int N;
+  int T;
   array[T] vector[N] y;
 
-  // for Ab, Q
-  array[K] matrix[N, N + 1] Mu;
-  array[K] cov_matrix[N + 1] Omega;
-  array[K] cov_matrix[N] Psi;
-  array[K] real<lower=N - 1> nu;
+  array[K] matrix[N, N] Mu_A;
+  real lambda_A;
+  real kappa_A;
 
-  // for R, r
-  array[K] matrix[K - 1, N + 1] Mu_r;
-  array[K] cov_matrix[K - 1] Sigma_r;
-  array[K] cov_matrix[N + 1] Omega_r;
+  array[K] vector[N] mu_b;
+  real lambda_b;
+  real kappa_b;
+
+  real lambda_Q;
+  real kappa_Q;
+
+  matrix[K - 1, N] Mu_R;
+  real lambda_R;
+  real kappa_R;
+
+  vector[K - 1] mu_r;
+  real lambda_r;
+  real kappa_r;
 }
 
 parameters {
-  // linear parameters for y
-  array[K] matrix[N, N] A;
-  array[K] vector[N] b;
-  array[K] cov_matrix[N] Q;
+  array[K] matrix[N, N] Z_A;
+  array[K] cholesky_factor_corr[N] L_A;
+  array[K] vector<lower=0, upper=pi() / 2>[N] sigma_A_unif;
 
-  // linear parameters for nu
-  array[K] matrix[K - 1, N] R;
-  array[K] vector[K - 1] r;
+  array[K] vector[N] z_b;
+  array[K] cholesky_factor_corr[N] L_b;
+  array[K] vector<lower=0, upper=pi() / 2>[N] sigma_b_unif;
+
+  array[K] cholesky_factor_corr[N] L_Q;
+  array[K] vector<lower=0, upper=pi() / 2>[N] sigma_Q_unif;
+
+  matrix[K - 1, N] Z_R;
+  cholesky_factor_corr[K - 1] L_R;
+  vector<lower=0, upper=pi() / 2>[K - 1] sigma_R_unif;
+
+  vector[K - 1] z_r;
+  cholesky_factor_corr[K - 1] L_r;
+  vector<lower=0, upper=pi() / 2>[K - 1] sigma_r_unif;
+}
+
+transformed parameters {
+  array[K] matrix[N, N] A;
+  array[K] vector<lower=0>[N] sigma_A;
+
+  array[K] vector[N] b;
+  array[K] vector<lower=0>[N] sigma_b;
+
+  array[K] cholesky_factor_cov[N] Q;
+  array[K] vector<lower=0>[N] sigma_Q;
+
+  matrix[K - 1, N] R;
+  vector<lower=0>[N] sigma_R;
+
+  vector[K - 1] r;
+  vector<lower=0>[N] sigma_r;
+
+  for (k in 1:K) {
+    sigma_A[k] = kappa_A * tan(sigma_A_unif[k]);
+    A[k] = Mu_A[k] + diag_pre_multiply(sigma_A[k], L_A[k]) * Z_A[k];
+
+    sigma_b[k] = kappa_b * tan(sigma_b_unif[k]);
+    b[k] = mu_b[k] + diag_pre_multiply(sigma_b[k], L_b[k]) * z_b[k];
+
+    sigma_Q[k] = kappa_Q * tan(sigma_Q_unif[k]);
+    Q[k] = diag_pre_multiply(sigma_Q[k], L_Q[k]);
+  }
+
+  sigma_R = kappa_R * tan(sigma_R_unif);
+  R = Mu_R + diag_pre_multiply(sigma_R, L_R) * Z_R;
+
+  sigma_r = kappa_r * tan(sigma_r_unif);
+  r = mu_r + diag_pre_multiply(sigma_r, L_r) * z_r;
 }
 
 model {
-  // assigning priors to linear parameters
   for (k in 1:K) {
-    Q[k] ~ wishart(nu[k], Psi[k]);
-    append_col(A[k], b[k]) ~ matrix_normal_prec(Mu[k], Q[k], Omega[k]);
-    append_col(R[k], r[k]) ~ matrix_normal_prec(Mu_r[k], Sigma_r[k], Omega_r[k]);
+    to_vector(Z_A[k]) ~ std_normal();
+    L_A[k] ~ lkj_corr_cholesky(lambda_A);
+
+    z_b[k] ~ std_normal();
+    L_b[k] ~ lkj_corr_cholesky(lambda_b);
+
+    L_Q[k] ~ lkj_corr_cholesky(lambda_Q);
   }
 
-  // gamma[t, k] = log p(z[t] = k, y[1:t])
-  array[T] vector[K] gamma;
+  to_vector(Z_R) ~ std_normal();
+  L_R ~ lkj_corr_cholesky(lambda_R);
 
-  // initialize with prior log p(z[1] = k), uniform
-  gamma[1] = rep_vector(-log(K), K);
-  
-  // forward algorithm main loop
+  z_r ~ std_normal();
+  L_r ~ lkj_corr_cholesky(lambda_r);
+
+  array[T] vector[K] log_pk;
+  log_pk[1] = rep_vector(-log(K), K);
+
   for (t in 2:T) {
     for (k in 1:K) {
-      gamma[t, k] =
-        // create vector with logged entries, then do
-        // log(exp(v1) + ... + exp(vk)) with log_sum_exp
-        log_sum_exp(gamma[t - 1] + logp_stick_break(R[k] * y[t - 1] + r[k]))
-        // log-likelihood log p(y[t] | z[t] = k, x[t])
-        + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
+      log_pk[t, k] =
+        log_sum_exp(log_pk[t - 1] + log_p_sb(R * y[t - 1] + r))
+        + multi_normal_cholesky_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
     }
   }
- 
-  // final marginalization over z
-  target += log_sum_exp(gamma[T]);
+
+  target += log_sum_exp(log_pk[T]);
 }
 
 generated quantities {
-  // predicted maximum-probability sequence of hidden states
   array[T] int z_star;
 
   {
     real log_p_z_star;
     array[T, K] int back_ptr;
-    array[T] vector[K] eta;
+    array[T] vector[K] max_log_pk;
 
-    // initialize the recursion with the uniform prior log p(z[1] = k)
-    eta[1] = rep_vector(-log(K), K);
+    max_log_pk[1] = rep_vector(-log(K), K);
 
-    real max_logp;
-    vector[K] logp;
- 
-    // Viterbi algorithm main loop
+    real max_over_zt;
+    vector[K] tmp;
+
     for (t in 2:T) {
       for (k in 1:K) {
-        max_logp = negative_infinity();
-        logp = eta[t - 1] + logp_stick_break(R[k] * y[t - 1] + r[k]);
+        max_over_zt = negative_infinity();
+        tmp = max_log_pk[t - 1] + log_p_sb(R * y[t - 1] + r);
 
-        // search for the max over logp and save the state in back_ptr
         for (j in 1:K) {
-          if (logp[j] > max_logp) {
-            max_logp = logp[j];
+          if (tmp[j] > max_over_zt) {
+            max_over_zt = tmp[j];
             back_ptr[t, k] = j;
           }
         }
-        
-        // complete eta with the log-likelihood part
-        eta[t, k] = max_logp
-          + multi_normal_prec_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
+
+        max_log_pk[t, k] = max_over_zt
+          + multi_normal_cholesky_lpdf(y[t] | A[k] * y[t - 1] + b[k], Q[k]);
       }
     }
 
-    // final maximization + loop to find the argmax
-    log_p_z_star = max(eta[T]);
+    log_p_z_star = max(max_log_pk[T]);
     for (k in 1:K) {
-      if (eta[T, k] == log_p_z_star) {
+      if (max_log_pk[T, k] == log_p_z_star) {
         z_star[T] = k;
         break;
       }
     }
- 
-    // fill z_star by traversing the back_ptr array
+
     for (t in 1:(T - 1)) {
       z_star[T - t] = back_ptr[T - t + 1, z_star[T - t + 1]];
     }
