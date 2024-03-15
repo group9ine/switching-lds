@@ -202,23 +202,24 @@ def circuit_two(pos):
 
 
 def just_a_square(T):
-    s=1
-    x=[[-1,-1]]
-    for t in range(T-1):
-        if s==1:
-            x.append([x[-1][0]+0.1, x[-1][1]])
-        elif s==2:
-            x.append([x[-1][0], x[-1][1]+0.1])
-        elif s==3:
-            x.append([x[-1][0]-0.1, x[-1][1]])
-        elif s==0:
-            x.append([x[-1][0], x[-1][1]-0.1])
-        
-        if (t+1)%20==0:
-            s=(s+1)%4
-    x=np.array(x)
+    s = 1
+    x = [[-1, -1]]
+    for t in range(T - 1):
+        if s == 1:
+            x.append([x[-1][0] + 0.1, x[-1][1]])
+        elif s == 2:
+            x.append([x[-1][0], x[-1][1] + 0.1])
+        elif s == 3:
+            x.append([x[-1][0] - 0.1, x[-1][1]])
+        elif s == 0:
+            x.append([x[-1][0], x[-1][1] - 0.1])
+
+        if (t + 1) % 20 == 0:
+            s = (s + 1) % 4
+    x = np.array(x)
     x += np.random.normal(0, 0.001, size=(len(x), 2))
     return x
+
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
@@ -228,8 +229,10 @@ if __name__ == "__main__":
     # data_a = advanced_model(T)
     # data_a = basic_model(T)
     # data_a = just_a_square(1000)
-    data_a = advanced_model(T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1,0))
-    
+    data_a = advanced_model(
+        T, pos_in_circuit=circuit_two, startx=(4.5, 0.1), startv=(-0.1, 0)
+    )
+
     with open("dataset.csv", "w") as f:
         for i in data_a:
             f.write(", ".join([str(j) for j in i]) + "\n")
@@ -240,18 +243,20 @@ if __name__ == "__main__":
     ax.plot(data_a[:, 1])
 
     plt.show()
-    
+
     x = np.linspace(min(data_a[:, 0]) - 0.1, max(data_a[:, 0]) + 0.1, 500)
     y = np.linspace(min(data_a[:, 1]) - 0.1, max(data_a[:, 1]) + 0.1, 500)
 
     x, y = np.meshgrid(x, y)
-    #circ = [
-        #[circuit_one((x[i][j], y[i][j])) for j in range(len(x[0]))]
-        #for i in range(len(x))
-    #]
-    circ = [[circuit_two((x[i][j],y[i][j])) for j in range(len(x[0]))] for i in range(len(x))]
+    # circ = [
+    # [circuit_one((x[i][j], y[i][j])) for j in range(len(x[0]))]
+    # for i in range(len(x))
+    # ]
+    circ = [
+        [circuit_two((x[i][j], y[i][j])) for j in range(len(x[0]))]
+        for i in range(len(x))
+    ]
     plt.scatter(x, y, c=circ, marker=".")
     plt.plot(data_a[:, 0], data_a[:, 1])
     plt.gca().set_aspect("equal")
     plt.show()
-    
