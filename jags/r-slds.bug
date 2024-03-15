@@ -1,73 +1,71 @@
 model {
-    ## this version doesn't work yet, we have to find a way to define pisb without going out-of-bounds
+  # useful variables
+  for (d in 1:D) {
+    Id[d, 1:D] <- c(rep(0, d-1), 1, rep(0, D-d))
+    Ab_mean[d, 1:D] <- c(rep(0, d - 1), 1, rep(0, D - d))
+  }
+
+  for (d in 1:(D + 1)) {
+    Id2[d, 1:(D + 1)] <- c(rep(0, d - 1), 1, rep(0, D + 1 - d))
+  }
+
+  Od <- rep(0, D + 1)
+  a <-  rep(1, K)
+
+  Ab_mean[D + 1, 1:D] <- rep(0, D)
+   
+  # priors
+  for (i in 1:(K-1)) {
+    U[i, 1:(D + 1), 1:(D + 1)] ~ dwish(Id2, D + 1)
+    Rc[i, 1:(D + 1)] ~ dmnorm(Od, U[i,,])
+  }
     
+  for (k in 1:K) { 
+    Q[k, 1:D, 1:D] ~ dwish(Id, D)
+      for (i in 1:D) { 
+        # equivalent to setting Sigma matrix to I
+        V[k, i, 1:(D + 1), 1:(D + 1)] ~ dwish(Id2, D + 1)
+        Ab[k, 1:(D + 1), i] ~ dmnorm(Ab_mean[, i], V[k, i,,])
+      }
+  }
+
+  p ~ ddirch(a)
+  z[1] ~ dcat(p)
     
-    # useful variables
-    for (d in 1:D) {
-        Id[d,1:D] <- c(rep(0, d-1),1,rep(0,D-d))
-        Ab_mean[d, 1:D] <- c(rep(0, d-1),1,rep(0,D-d))
+  # update rules
+  for (t in 2:T) { 
+    nu[t, 1:(K - 1)] <- Rc[, 1:D] %*% x[t - 1, 1:D] + Rc[, D + 1]
+    
+    pisb[t - 1, 1] <- plogis(nu[t, 1], 0, 1)
+    pl[t, 1] <- plogis(-nu[t, 1], 0, 1)
+    for (k in 2:(K - 1)) {
+      pl[t, k] <- pl[t, k - 1] * plogis(-nu[t, k], 0, 1)
+      pisb[t - 1,k] <- pl[t, k - 1] * plogis(nu[t, k], 0, 1)
     }
-    for (d in 1:(D+1)) {
-        Id2[d,1:(D+1)] <- c(rep(0, d-1),1,rep(0,D+1-d))
+    pisb[t - 1, K] <- pl[t, K - 1]
+
+    z[t] ~ dcat(pisb[t - 1,])
+    # multivariate defined in terms of covariance matrix
+    x[t, 1:D] ~ dmnorm(Ab[z[t], 1:D,] %*% x[t - 1, 1:D]
+                       + Ab[z[t], D + 1,], Q[z[t],,]) 
+  }
+    
+  # prediction with same starting point and status
+  predz[1] <- z[1]
+  predx[1, 1:D] <- x[1, 1:D]
+
+  for (t in 2:T) {
+    prednu[t, 1:(K - 1)] <- Rc[, 1:D] %*% predx[t - 1, 1:D] + Rc[, D + 1]
+    predpisb[t - 1, 1] <- plogis(prednu[t, 1], 0, 1)
+    predpl[t, 1] <- plogis(-prednu[t, 1], 0, 1)
+    for (k in 2:(K - 1)) {
+      predpl[t, k] <- predpl[t, k - 1] * plogis(-prednu[t, k], 0, 1)
+      predpisb[t - 1, k] <- predpl[t, k - 1] * plogis(prednu[t, k], 0, 1)
     }
-    Od <- rep(0, D+1)
-    a <-  rep(1,K)
+    predpisb[t - 1, K] <- predpl[t, K - 1]
     
-    Ab_mean[D+1,1:D] <- rep(0, D)
-    
-    # priors
-    for (i in 1:(K-1)) {
-        U[i,1:(D+1),1:(D+1)] ~ dwish(Id2,(D+1))
-        Rc[i,1:(D+1)] ~ dmnorm(Od, U[i,,])
-    }
-    
-    for (k in 1:K) { 
-        Q[k,1:D,1:D] ~ dwish(Id, D)
-        for (i in 1:D) { 
-            ## equivalent ot setting Sigma matrix to I
-            V[k,i,1:(D+1),1:(D+1)] ~ dwish(Id2, D+1)
-            #Ab[k,1:(D+1),i] ~ dmnorm(Od, V[k,i,,])
-            Ab[k,1:(D+1),i] ~ dmnorm(Ab_mean[,i], V[k,i,,])
-        }
-    }
-    p ~ ddirch(a)
-    #p ~ dbeta(1,1)
-    z[1] ~ dcat(p)
-    #x[1,1:D] <- x0
-    
-    # update rules
-    for (t in 2:T) { 
-        nu[t,1:(K-1)] <- Rc[,1:D] %*% x[t-1,1:D] + Rc[,(D+1)]
-        
-        pisb[(t-1),1] <- plogis(nu[t,1],0,1)
-        pl[t,1] <- plogis(-nu[t,1],0,1)
-        for (k in 2:(K-1)) {
-            pl[t,k] <- pl[t,k-1] * plogis(-nu[t,k],0,1)
-            pisb[(t-1),k] <- pl[t,k-1] * plogis(nu[t,k],0,1)
-        }
-        pisb[(t-1),K] <- pl[t,K-1]
-        
-        z[t] ~ dcat(pisb[t-1,])
-        x[t,1:D] ~ dmnorm(Ab[z[t],1:D,] %*% x[t-1,1:D] + Ab[z[t],D+1,], Q[z[t],,]) 
-        ## multivariate defined in terms of covariance matrix
-    }
-    
-    # prediction with same starting point and status
-    
-    predz[1] <- z[1]
-    predx[1,1:D] <- x[1,1:D]
-    
-    for (t in 2:T) {
-        prednu[t,1:(K-1)] <- Rc[,1:D] %*% predx[t-1,1:D] + Rc[,(D+1)]
-        predpisb[(t-1),1] <- plogis(prednu[t,1],0,1)
-        predpl[t,1] <- plogis(-prednu[t,1],0,1)
-        for (k in 2:(K-1)) {
-            predpl[t,k] <- predpl[t,k-1] * plogis(-prednu[t,k],0,1)
-            predpisb[(t-1),k] <- predpl[t,k-1] * plogis(prednu[t,k],0,1)
-        }
-        predpisb[(t-1),K] <- predpl[t,K-1]
-        
-        predz[t] ~ dcat(predpisb[(t-1),])
-        predx[t,1:D] ~ dmnorm(Ab[predz[t],1:D,] %*% predx[t-1,1:D] + Ab[predz[t],D+1,], Q[predz[t],,]) 
-    }
+    predz[t] ~ dcat(predpisb[t - 1,])
+    predx[t, 1:D] ~ dmnorm(Ab[predz[t], 1:D,] %*% predx[t - 1, 1:D]
+                           + Ab[predz[t], D + 1,], Q[predz[t],,]) 
+  }
 }
