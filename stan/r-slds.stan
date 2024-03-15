@@ -51,24 +51,28 @@ parameters {
   array[K] cholesky_factor_corr[N] L_Q;
   array[K] vector<lower=0, upper=pi() / 2>[N] sigma_Q_unif;
 
-  array[K] matrix[K - 1, N] Z_R;
-  array[K] cholesky_factor_corr[K - 1] L_R;
-  array[K] vector<lower=0, upper=pi() / 2>[K - 1] sigma_R_unif;
+  matrix[K - 1, N] Z_R;
+  cholesky_factor_corr[K - 1] L_R;
+  vector<lower=0, upper=pi() / 2>[K - 1] sigma_R_unif;
 
-  array[K] vector[K - 1] z_r;
-  array[K] cholesky_factor_corr[K - 1] L_r;
-  array[K] vector<lower=0, upper=pi() / 2>[K - 1] sigma_r_unif;
+  vector[K - 1] z_r;
+  cholesky_factor_corr[K - 1] L_r;
+  vector<lower=0, upper=pi() / 2>[K - 1] sigma_r_unif;
 }
 
 transformed parameters {
   array[K] matrix[N, N] A;
   array[K] vector<lower=0>[N] sigma_A;
+
   array[K] vector[N] b;
   array[K] vector<lower=0>[N] sigma_b;
+
   array[K] cholesky_factor_cov[N] Q;
   array[K] vector<lower=0>[N] sigma_Q;
+
   matrix[K - 1, N] R;
   vector<lower=0>[N] sigma_R;
+
   vector[K - 1] r;
   vector<lower=0>[N] sigma_r;
 

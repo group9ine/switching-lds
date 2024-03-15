@@ -38,7 +38,7 @@ Q <- function(z) {
 }
 
 # hidden state sequence
-z <- rep(1:3, each = period, times = 10)
+z <- rep(1:3, each = period, times = 8)
 # generate the data
 x <- matrix(0, nrow = 2, ncol = length(z))
 x[, 1] <- c(0, 0)
@@ -54,8 +54,8 @@ pacman <- data.table(t(x))
 setnames(pacman, c("x", "y"))
 
 # rescale to avoid numerical issues
-sc_fct <- 100 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
-#sc_fct <- 1
+#sc_fct <- 1 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+sc_fct <- 1
 pacman <- pacman * sc_fct
 
 ggplot(pacman, aes(x, y)) +
@@ -66,17 +66,19 @@ ggplot(pacman, aes(x, y)) +
 data_list <- list(
   K = 3, N = 2, T = nrow(pacman), y = as.matrix(pacman),
   Mu_A = list(diag(1, 2), rot(theta), diag(1, 2)),
-  Sigma_A = rep(list(diag(0.5, 2)), 3),
+  lambda_A = 2, kappa_A = 1,
   mu_b = list(sc_fct * c(dt, dt), c(0, 0), sc_fct * c(-dt, dt)),
-  Sigma_b = rep(list(diag(10, 2)), 3),
-  lambda_Q = 1, kappa_Q = 0.1, 
-  Mu_R = rep(list(diag(1, 2)), 3),
-  mu_r = rep(list(c(1, 1)), 3)
+  lambda_b = 1.5, kappa_b = 1,
+  lambda_Q = 2, kappa_Q = 1.5,
+  Mu_R = diag(1, 2),
+  lambda_R = 2, kappa_R = 2,
+  mu_r = c(1, 1),
+  lambda_r = 2, kappa_r = 2
 )
 
 if (cmd_inst) {
   # compile the rSLDS model
-  mod <- cmdstan_model("stan/r-slds-simp.stan", compile = FALSE)
+  mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
   mod$check_syntax(pedantic = TRUE)
   mod$compile(cpp_options = list(
     stan_cpp_optims = FALSE,
@@ -100,31 +102,9 @@ if (cmd_inst) {
     model_name = "SLDS",
     allow_optimizations = TRUE
   )
-}
 
-if (!cmd_inst){
   fit <- sampling(
     sm, data = data_list,
     chains = 4, iter = 2000, warmup = 1000
   )
 }
-
-draws <- fit$draws(format = "df") |> as.data.table()
-names(draws) <- gsub("[.]|__", "", names(draws))
-
-par_name <- \(rgx) names(draws)[grep(rgx, names(draws))]
-
-z_star <- melt(
-  draws[, lapply(.SD, mean), by = chain, .SDcols = par_name("z_star")],
-  id.vars = "chain", variable.name = "iter", value.name = "z"
-)[, `:=`(chain = factor(chain), iter = as.integer(gsub("[^0-9]", "", iter)))]
-
-ggplot(z_star, aes(iter, z)) +
-  geom_point() +
-  facet_wrap(vars(chain), nrow = 2)
-
-par_name("^A.2") |>
-  fit$draws() |>
-  bayesplot::mcmc_hist()
-
-par_name("^b.2") |> fit$draws() |> bayesplot::mcmc_hist_by_chain()
