@@ -54,8 +54,8 @@ pacman <- data.table(t(x))
 setnames(pacman, c("x", "y"))
 
 # rescale to avoid numerical issues
-#sc_fct <- 1 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
-sc_fct <- 1
+sc_fct <- 1 / pacman[, mean(sqrt(diff(x)^2 + diff(y)^2))]
+#sc_fct <- 1
 pacman <- pacman * sc_fct
 
 ggplot(pacman, aes(x, y)) +
@@ -70,7 +70,7 @@ data_list <- list(
   mu_b = list(sc_fct * c(dt, dt), c(0, 0), sc_fct * c(-dt, dt)),
   lambda_b = 1.5, kappa_b = 1,
   lambda_Q = 2, kappa_Q = 1.5,
-  Mu_R = diag(1, 2),
+  Mu_R = diag(2, 2),
   lambda_R = 2, kappa_R = 2,
   mu_r = c(1, 1),
   lambda_r = 2, kappa_r = 2
@@ -78,7 +78,7 @@ data_list <- list(
 
 if (cmd_inst) {
   # compile the rSLDS model
-  mod <- cmdstan_model("stan/r-slds.stan", compile = FALSE)
+  mod <- cmdstan_model("r-slds.stan", compile = FALSE)
   mod$check_syntax(pedantic = TRUE)
   mod$compile(cpp_options = list(
     stan_cpp_optims = FALSE,
@@ -87,18 +87,18 @@ if (cmd_inst) {
 
   fit <- mod$sample(
     data = data_list,
-    output_dir = "out",
-    chains = 2,
+    output_dir = "../out",
+    chains = 1,
     iter_warmup = 1000,
     iter_sampling = 2000,
     show_exceptions = TRUE
   )
 
   # save results to file
-  fit$save_object(file = "out/pacman_fit.rds")
+  fit$save_object(file = "../out/pacman_fit.rds")
 } else {
   sm <- stan_model(
-    file = "stan/r-slds.stan",
+    file = "r-slds.stan",
     model_name = "SLDS",
     allow_optimizations = TRUE
   )
